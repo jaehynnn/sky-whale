@@ -588,7 +588,7 @@ button.accept {
     0 0 23px rgba(237, 200, 119, 0.46),
     0 0 49px rgba(226, 177, 83, 0.29) !important;
 
-  animation: mission-gold-breathe 4s ease-in-out infinite;
+  animation: mission-gold-breathe 2s ease-in-out infinite;
 }
 
 /* 금빛이 천천히 퍼졌다 잦아드는 효과 */
