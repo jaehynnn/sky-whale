@@ -9,3 +9,408 @@
 @media(min-width:761px) and (max-height:600px){.parcel{left:20%;top:26%;width:120px}.invitation-copy{left:36%;right:8%;top:17%}.invitation-copy .eyebrow{margin-bottom:10px}.invitation-copy .dialogue{font-size:19px;line-height:1.65}.invitation-question{margin-top:10px;font-size:16px}.choices{top:72%;left:64%;width:55%}.choices .accept,.refuse{min-height:44px;padding-top:10px;padding-bottom:10px}.story-footer .continue{bottom:24px}.accepted-copy{top:21%}.accepted-copy .eyebrow{margin-bottom:12px}.accepted-copy .dialogue{font-size:24px}.accepted-copy>p:not(.eyebrow){font-size:11px;margin:12px 0}.accepted-copy .accept{min-height:44px;padding:10px 15px}}
 
 .map-scene{background:#080f26}.map-world>img{mask-image:linear-gradient(transparent,#000 5%,#000 95%,transparent)}
+/* =========================================
+   하늘고래 디자인 통일
+   청보라 유리빛 · 샴페인 골드 · 깊은 남색
+   ========================================= */
+
+:root {
+  --fantasy-gold: #e8cc98;
+  --fantasy-pale: #fff3da;
+  --fantasy-lavender: #b6b5ef;
+  --fantasy-blue: #8faee6;
+  --fantasy-ink: #111b34;
+}
+
+/* =========================================
+   1. 보따리와 빛: 독립된 두 레이어
+   ========================================= */
+
+#invitation .parcel {
+  width: clamp(150px, 22svh, 230px);
+  height: auto;
+  aspect-ratio: 1;
+  top: 10%;
+  overflow: visible;
+  isolation: isolate;
+
+  background:
+    url("assets/parcel-fantasy.png")
+    center / contain no-repeat;
+
+  filter: drop-shadow(0 0 18px #aaa6ef35);
+  animation: fantasy-parcel-float 6s ease-in-out infinite;
+}
+
+/* 기존 임시 보따리와 별 장식 숨김 */
+#invitation .parcel > svg,
+#invitation .parcel .parcel-spark {
+  display: none !important;
+}
+
+/* 별도 이미지인 주변 빛 레이어 */
+#invitation .parcel::before {
+  content: "";
+  position: absolute;
+  inset: -30% -40%;
+  z-index: 2;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+
+  background:
+    url("assets/parcel-light.png")
+    center / contain no-repeat;
+
+  pointer-events: none;
+  transform-origin: center;
+  opacity: .82;
+
+  animation:
+    fantasy-light-drift 9s ease-in-out infinite;
+}
+
+/* 빛 뒤에 깔리는 은은한 후광 */
+#invitation .parcel::after {
+  content: "";
+  position: absolute;
+  inset: -15%;
+  z-index: -1;
+  border: 0;
+  border-radius: 50%;
+  box-shadow: none;
+  transform: none;
+
+  background:
+    radial-gradient(
+      ellipse,
+      #b5a9ed30,
+      #e8c88d12 45%,
+      transparent 72%
+    );
+
+  filter: blur(14px);
+  opacity: .75;
+
+  animation:
+    fantasy-aura-breathe 5s ease-in-out infinite;
+}
+
+#invitation .invitation-glow {
+  background:
+    radial-gradient(
+      ellipse at center,
+      #a6a0e625,
+      #e1bd7d10 35%,
+      transparent 68%
+    );
+}
+
+@keyframes fantasy-parcel-float {
+  0%, 100% {
+    transform: translate(-50%, 0) rotate(-2deg);
+  }
+
+  50% {
+    transform: translate(-50%, -10px) rotate(2deg);
+  }
+}
+
+@keyframes fantasy-light-drift {
+  0%, 100% {
+    transform: translateY(5px) rotate(-8deg) scale(.97);
+    opacity: .65;
+  }
+
+  50% {
+    transform: translateY(-7px) rotate(7deg) scale(1.05);
+    opacity: .95;
+  }
+}
+
+@keyframes fantasy-aura-breathe {
+  0%, 100% {
+    opacity: .45;
+    scale: .95;
+  }
+
+  50% {
+    opacity: .85;
+    scale: 1.1;
+  }
+}
+
+/* =========================================
+   2. 미션 카드: 글자와 분리된 장식 테두리
+   ========================================= */
+
+/* 기존 4개 카드와 이후 단일 카드 구조 모두 대응 */
+.mission-grid > details,
+.mission-card {
+  position: relative;
+  isolation: isolate;
+  overflow: visible;
+
+  border: 1px solid #e8cc9875;
+  border-radius: 18px;
+
+  background:
+    radial-gradient(
+      ellipse at 15% 0%,
+      #a9a7ee17,
+      transparent 55%
+    ),
+    linear-gradient(
+      145deg,
+      #1c2945e8,
+      #10192de8 55%,
+      #242440e8
+    );
+
+  box-shadow:
+    inset 0 0 0 5px #0c14254d,
+    inset 0 0 28px #a7a5e908,
+    0 16px 40px #02071540,
+    0 0 22px #aaa7ed08;
+}
+
+/* 안쪽의 가느다란 이중 프레임 */
+.mission-grid > details::before,
+.mission-card::before {
+  content: "";
+  position: absolute;
+  inset: 7px;
+  z-index: 2;
+  border: 1px solid #c8c4f22b;
+  border-radius: 12px;
+  pointer-events: none;
+}
+
+/* 네 모서리의 금빛 장식 */
+.mission-grid > details::after,
+.mission-card::after {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  z-index: 3;
+  border-radius: 18px;
+  pointer-events: none;
+
+  background:
+    linear-gradient(var(--fantasy-gold), var(--fantasy-gold))
+      left 12px top / 24px 2px no-repeat,
+    linear-gradient(var(--fantasy-gold), var(--fantasy-gold))
+      left top 12px / 2px 24px no-repeat,
+
+    linear-gradient(var(--fantasy-gold), var(--fantasy-gold))
+      right 12px top / 24px 2px no-repeat,
+    linear-gradient(var(--fantasy-gold), var(--fantasy-gold))
+      right top 12px / 2px 24px no-repeat,
+
+    linear-gradient(var(--fantasy-gold), var(--fantasy-gold))
+      left 12px bottom / 24px 2px no-repeat,
+    linear-gradient(var(--fantasy-gold), var(--fantasy-gold))
+      left bottom 12px / 2px 24px no-repeat,
+
+    linear-gradient(var(--fantasy-gold), var(--fantasy-gold))
+      right 12px bottom / 24px 2px no-repeat,
+    linear-gradient(var(--fantasy-gold), var(--fantasy-gold))
+      right bottom 12px / 2px 24px no-repeat;
+
+  filter: drop-shadow(0 0 5px #efd39d35);
+}
+
+.mission-grid > details > summary {
+  border-radius: 17px;
+  background: transparent;
+}
+
+.mission-grid > details[open] {
+  border-color: #f3d9a8bb;
+
+  box-shadow:
+    inset 0 0 0 5px #0c14254d,
+    0 16px 40px #02071540,
+    0 0 26px #aaa7ed16;
+}
+
+/* 카드 내부 글자는 기존 HTML 그대로 사용 */
+.mission-grid .mission-symbol {
+  color: var(--fantasy-pale);
+
+  text-shadow:
+    0 0 16px #c0b9ef55,
+    0 0 35px #e5c99525;
+}
+
+.mission-grid .mission-num,
+.mission-grid .mission-toggle {
+  color: var(--fantasy-gold);
+}
+
+.mission-example {
+  border-radius: 17px 17px 0 0;
+
+  background:
+    radial-gradient(
+      ellipse at 50% 60%,
+      #aaa1e323,
+      transparent 70%
+    ),
+    #15213a;
+}
+
+/* =========================================
+   3. 수락·거절·미션 선택 버튼
+   ========================================= */
+
+button.accept,
+button.refuse,
+.mission-tabs button {
+  position: relative;
+  isolation: isolate;
+
+  min-height: 48px;
+  padding: 14px 26px;
+
+  border: 1px solid #e9cc9599;
+  border-radius: 11px;
+
+  color: var(--fantasy-pale);
+
+  background:
+    radial-gradient(
+      ellipse at 50% 0%,
+      #c6bbef28,
+      transparent 75%
+    ),
+    linear-gradient(
+      160deg,
+      #304064f2,
+      #19243ff5 55%,
+      #2c294bf2
+    );
+
+  box-shadow:
+    inset 0 1px 0 #f8e7c333,
+    inset 0 -2px 8px #070c1a50,
+    0 5px 18px #02061245,
+    0 0 16px #b0a9e713;
+
+  font-family: var(--serif);
+  font-size: 15px;
+  letter-spacing: .04em;
+  text-shadow: 0 1px 7px #060b19;
+}
+
+/* ボタン内側の細い枠 */
+button.accept::before,
+button.refuse::before,
+.mission-tabs button::before {
+  content: "";
+  position: absolute;
+  inset: 4px;
+  border: 1px solid #ded4f32c;
+  border-radius: 7px;
+  pointer-events: none;
+}
+
+/* 수락 버튼에 조금 더 따뜻한 빛 */
+button.accept {
+  border-color: #f1d6a2bb;
+
+  background:
+    radial-gradient(
+      ellipse at 50% 0%,
+      #e8cca437,
+      transparent 75%
+    ),
+    linear-gradient(
+      160deg,
+      #424360f5,
+      #252d49f5 55%,
+      #39304ff5
+    );
+}
+
+@media (hover: hover) {
+  button.accept:hover,
+  button.refuse:hover,
+  .mission-tabs button:hover {
+    border-color: #ffe6b8;
+
+    box-shadow:
+      inset 0 1px 0 #fff0d44d,
+      inset 0 0 18px #bcb3ec12,
+      0 5px 18px #02061245,
+      0 0 22px #d8c2ef30;
+  }
+}
+
+.mission-tabs button[aria-selected="true"] {
+  color: #fff5df;
+  border-color: #ffe2a8;
+
+  background:
+    radial-gradient(
+      ellipse at 50% 0%,
+      #e8cca447,
+      transparent 80%
+    ),
+    linear-gradient(150deg, #4b4768, #2c3554);
+
+  box-shadow:
+    inset 0 0 16px #ead8b115,
+    0 0 18px #d8c2ef20;
+}
+
+/* 하단 진행 버튼은 같은 계열의 가벼운 표현 */
+#continue {
+  padding: 10px 18px;
+  border: 1px solid #daca9c45;
+  border-radius: 999px;
+
+  color: #f1e4ca;
+
+  background:
+    linear-gradient(135deg, #29365090, #171f3680);
+
+  box-shadow: inset 0 1px 0 #d7c9ed14;
+  backdrop-filter: blur(8px);
+}
+
+/* 모바일 */
+@media (max-width: 760px) {
+  #invitation .parcel {
+    top: 11%;
+    width: clamp(130px, 20svh, 175px);
+  }
+
+  button.accept,
+  button.refuse {
+    padding: 13px 19px;
+    font-size: 14px;
+  }
+
+  .mission-tabs button {
+    padding: 12px 8px;
+    font-size: 14px;
+  }
+}
+
+/* 낮은 화면에서는 보따리가 대사와 겹치지 않게 축소 */
+@media (max-height: 520px) {
+  #invitation .parcel {
+    left: 15%;
+    top: 25%;
+    width: 110px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #invitation .parcel,
+  #invitation .parcel::before,
+  #invitation .parcel::after {
+    animation: none !important;
+  }
+}
