@@ -328,13 +328,14 @@
     /*
      * 거절 버튼의 위치와 속도.
      */
-    const repel = {
-      x: 0,
-      y: 0,
-      vx: 0,
-      vy: 0,
-      pointer: null
-    };
+const repel = {
+  x: 0,
+  y: 0,
+  vx: 0,
+  vy: 0,
+  pointer: null,
+  bounceUntil: 0
+};
     
 const REPULSION_RADIUS = 190;
 const MAX_SPEED = 760;
@@ -412,7 +413,7 @@ const MAX_SPEED = 760;
       let accelerationX = 0;
       let accelerationY = 0;
 
-      if (repel.pointer) {
+if (repel.pointer && performance.now() >= repel.bounceUntil) {
         const pointerX = repel.pointer.x - sceneRect.left;
         const pointerY = repel.pointer.y - sceneRect.top;
 
@@ -484,7 +485,8 @@ const MAX_SPEED = 760;
       repel.vx += accelerationX * dt;
       repel.vy += accelerationY * dt;
 
-      const friction = Math.exp(-5 * dt);
+      const bouncing = performance.now() < repel.bounceUntil;
+      const friction = Math.exp(-(bouncing ? 0.8 : 5) * dt);
       repel.vx *= friction;
       repel.vy *= friction;
 
@@ -514,21 +516,39 @@ const MAX_SPEED = 760;
         stage.clientHeight - height - 85
       );
 
-      if (repel.x < minX) {
-        repel.x = minX;
-        repel.vx = Math.abs(repel.vx) * 0.25;
-      } else if (repel.x > maxX) {
-        repel.x = maxX;
-        repel.vx = -Math.abs(repel.vx) * 0.25;
-      }
+const hitLeft = repel.x < minX;
+const hitRight = repel.x > maxX;
+const hitTop = repel.y < minY;
+const hitBottom = repel.y > maxY;
 
-      if (repel.y < minY) {
-        repel.y = minY;
-        repel.vy = Math.abs(repel.vy) * 0.25;
-      } else if (repel.y > maxY) {
-        repel.y = maxY;
-        repel.vy = -Math.abs(repel.vy) * 0.25;
-      }
+if (hitLeft || hitRight || hitTop || hitBottom) {
+  repel.x = Math.max(minX, Math.min(maxX, repel.x));
+  repel.y = Math.max(minY, Math.min(maxY, repel.y));
+
+  /*
+   * 벽 반대 방향 + 화면 중앙 방향으로 튕깁니다.
+   * 모서리에서는 두 축 모두 안쪽을 향합니다.
+   */
+  let directionX = hitLeft ? 1 : hitRight ? -1 : 0;
+  let directionY = hitTop ? 1 : hitBottom ? -1 : 0;
+
+  if (!directionX) {
+    directionX = repel.x < (minX + maxX) / 2 ? 0.75 : -0.75;
+  }
+
+  if (!directionY) {
+    directionY = repel.y < (minY + maxY) / 2 ? 0.75 : -0.75;
+  }
+
+  const length = Math.hypot(directionX, directionY);
+  const bounceSpeed = MAX_SPEED;
+
+  repel.vx = directionX / length * bounceSpeed;
+  repel.vy = directionY / length * bounceSpeed;
+
+  // 잠시 커서의 반발력을 무시해 벽에서 빠져나옵니다.
+  repel.bounceUntil = performance.now() + 650;
+}
 
       refuse.style.left = `${repel.x.toFixed(2)}px`;
       refuse.style.top = `${repel.y.toFixed(2)}px`;
@@ -584,6 +604,100 @@ const MAX_SPEED = 760;
     /*
      * スクロール位置に合わせて各場面を描画します。
      */
+
+    /*
+ * 기존 고래 이미지를 Canvas로 그려
+ * 몸 중앙은 유지하고 양쪽 지느러미 부위를 변형합니다.
+ */
+const swimSource = $('#whale-flight img');
+const swimCanvas = document.createElement('canvas');
+const swimContext = swimCanvas.getContext('2d');
+
+swimCanvas.setAttribute('aria-hidden', 'true');
+
+swimCanvas.style.cssText = `
+  position:absolute;
+  left:0;
+  top:-12%;
+  width:100%;
+  height:124%;
+  pointer-events:none;
+`;
+
+if (swimSource && swimContext) {
+  swimSource.parentElement.append(swimCanvas);
+}
+
+function drawSwimmingWhale(now) {
+  if (
+    !swimSource ||
+    !swimContext ||
+    !swimSource.complete ||
+    !swimSource.naturalWidth
+  ) {
+    return;
+  }
+
+  const sourceWidth = swimSource.naturalWidth;
+  const sourceHeight = swimSource.naturalHeight;
+
+  // Canvas 해상도 제한으로 확대 시 과도한 메모리 사용 방지.
+  const width = Math.min(sourceWidth, 1400);
+  const height = Math.round(width * sourceHeight / sourceWidth);
+  const padding = Math.ceil(height * 0.12);
+
+  if (
+    swimCanvas.width !== width ||
+    swimCanvas.height !== height + padding * 2
+  ) {
+    swimCanvas.width = width;
+    swimCanvas.height = height + padding * 2;
+  }
+
+  swimContext.clearRect(
+    0, 0, swimCanvas.width, swimCanvas.height
+  );
+
+  const phase = now / 1000 * Math.PI * 2 / 3.6;
+  const strips = reduced ? 1 : 100;
+
+  for (let i = 0; i < strips; i++) {
+    const u = (i + 0.5) / strips;
+
+    // 몸통 중앙은 고정하고 양쪽으로 갈수록 변형을 늘립니다.
+    const finWeight = Math.pow(
+      Math.max(0, (Math.abs(u - 0.5) - 0.17) / 0.33),
+      1.6
+    );
+
+    const bend = reduced
+      ? 0
+      : Math.sin(phase + finWeight * 0.45) *
+        height * 0.065 * finWeight;
+
+    const sourceX = i * sourceWidth / strips;
+    const sourceStripWidth = Math.min(
+      sourceWidth / strips + 1,
+      sourceWidth - sourceX
+    );
+
+    swimContext.drawImage(
+      swimSource,
+      sourceX,
+      0,
+      sourceStripWidth,
+      sourceHeight,
+      i * width / strips,
+      padding + bend,
+      sourceStripWidth * width / sourceWidth,
+      height - bend * 0.3
+    );
+  }
+
+  // Canvas에 정상적으로 그린 후 원본 이미지를 숨깁니다.
+  swimSource.style.visibility = 'hidden';
+}
+
     let previousTime = 0;
 
     function render(now) {
@@ -752,17 +866,26 @@ if (whaleFlight) {
   whaleFlight.style.transformOrigin = '50% 50%';
   whaleFlight.style.opacity = appear;
 
-  whaleFlight.style.transform =
-    `translate(-50%, -50%) scale(${scale})`;
+const bob = reduced
+  ? 0
+  : Math.sin(now / 1000 * Math.PI * 2 / 3.6) *
+    7 * (1 - approach);
 
-  if (image) {
-    image.style.display = 'block';
-    image.style.width = '100%';
-    image.style.height = '100%';
-    image.style.objectFit = 'contain';
-    image.style.animation = 'none';
-    image.style.transform = 'none';
-  }
+whaleFlight.style.transform =
+  `translate(-50%, calc(-50% + ${bob}px)) scale(${scale})`;
+
+if (image) {
+  image.style.display = 'block';
+  image.style.width = '100%';
+  image.style.height = '100%';
+  image.style.objectFit = 'contain';
+  image.style.animation = 'none';
+  image.style.transform = 'none';
+}
+
+if (appear > 0 && harborFade > 0) {
+  drawSwimmingWhale(now);
+}
 }
 
       visibility($('#invitation'), inviteFade);
