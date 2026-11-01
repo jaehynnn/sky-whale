@@ -45,7 +45,7 @@
 
     const typingStarts = new WeakMap();
 
-    /* 기존 CSS 유지 + 필요한 보정과 새 장면 스타일 */
+    /* 화면 보정 및 장면 스타일 */
     const repairStyle = document.createElement('style');
 
     repairStyle.textContent = `
@@ -139,6 +139,7 @@
       #night-caption .eyebrow,
       #accepted .eyebrow,
       .mission-heading .eyebrow,
+      .invitation-copy > .eyebrow,
       .marker-label {
         display:none !important;
       }
@@ -151,15 +152,13 @@
       #intro {
         background:
           linear-gradient(#0000004d,#0000004d),
-          url("assets/night-whales.png")
-          center/cover no-repeat;
+          url("assets/night-whales.png") center/cover no-repeat;
       }
 
       #stage > .sky {
         background:
           linear-gradient(#0000004d,#0000004d),
-          url("assets/night-clean.png")
-          center/cover no-repeat;
+          url("assets/night-clean.png") center/cover no-repeat;
       }
 
       #stage > .sky .moon,
@@ -174,8 +173,9 @@
         background:transparent !important;
       }
 
+      /* 직전 지도 크기에서 추가 20% 확대 */
       .map-position {
-        width:min(84svh,720px) !important;
+        width:min(100.8svh,864px) !important;
       }
 
       #map-world > img {
@@ -197,9 +197,7 @@
       .dialogue {
         font-style:italic !important;
         color:#fff;
-        text-shadow:
-          0 2px 8px #000b,
-          0 0 24px #030817cc;
+        text-shadow:0 2px 8px #000b,0 0 24px #030817cc;
       }
 
       .dialogue .word {
@@ -215,8 +213,7 @@
       #missions {
         background:
           linear-gradient(#0000004d,#0000004d),
-          url("assets/night-clean.png")
-          center/cover no-repeat;
+          url("assets/night-clean.png") center/cover no-repeat;
       }
 
       .mission-grid > details,
@@ -246,7 +243,6 @@
             0 0 22px #9bbce914,
             0 12px 35px #02071540;
         }
-
         50% {
           border-color:#f0dab29e;
           box-shadow:
@@ -257,7 +253,7 @@
         }
       }
 
-      /* 구체가 모이는 장면과 마지막 탑승 장면 */
+      /* 마지막 구체·탑승 장면 */
       #memory-ending {
         position:relative;
         background:#081725;
@@ -282,17 +278,16 @@
         z-index:0;
         background:
           linear-gradient(#0000004d,#0000004d),
-          url("assets/night-clean.png")
-          center/cover no-repeat;
+          url("assets/night-clean.png") center/cover no-repeat;
       }
 
+      /* 실제 업로드된 탑승 이미지 파일명 */
       .memory-final-image {
         z-index:1;
         opacity:0;
         background:
           linear-gradient(#0000004d,#0000004d),
-          url("assets/finale-riders.png")
-          center/cover no-repeat;
+          url("assets/final-riders.png") center/cover no-repeat;
       }
 
       .memory-bundle {
@@ -304,8 +299,7 @@
         aspect-ratio:1;
         transform:translate(-50%,-50%);
         background:
-          url("assets/parcel-fantasy.png")
-          center/contain no-repeat;
+          url("assets/parcel-fantasy.png") center/contain no-repeat;
         pointer-events:none;
       }
 
@@ -314,8 +308,7 @@
         position:absolute;
         inset:-30% -40%;
         background:
-          url("assets/parcel-light.png")
-          center/contain no-repeat;
+          url("assets/parcel-light.png") center/contain no-repeat;
         animation:memory-light-float 8s ease-in-out infinite;
       }
 
@@ -370,9 +363,7 @@
         font-style:italic;
         line-height:1.9;
         color:#fff;
-        text-shadow:
-          0 2px 10px #000b,
-          0 0 28px #23162ec0;
+        text-shadow:0 2px 10px #000b,0 0 28px #23162ec0;
         pointer-events:none;
       }
 
@@ -381,7 +372,6 @@
           transform:translateY(5px) rotate(-7deg);
           opacity:.7;
         }
-
         50% {
           transform:translateY(-7px) rotate(7deg);
           opacity:1;
@@ -394,17 +384,14 @@
 
       @media(max-width:760px) {
         .map-position {
-          width:min(110.4vw,78svh) !important;
+          width:min(132.48vw,93.6svh) !important;
         }
-
         .memory-bundle {
           width:min(45vw,220px);
         }
-
         .memory-orb {
           width:95px;
         }
-
         .memory-final-image {
           background-color:#312838;
           background-size:100% 100%,100% auto;
@@ -422,7 +409,10 @@
 
     document.head.append(repairStyle);
 
-    /* 실제 스크롤 위치와 이야기 진행 위치 */
+    /* 수락 버튼의 화살표 제거 */
+    accept?.querySelectorAll('[aria-hidden="true"]')
+      .forEach(element => element.remove());
+
     function rawScrollTop() {
       return window.scrollY ||
         document.scrollingElement?.scrollTop ||
@@ -475,10 +465,7 @@
       );
 
       window.scrollTo({
-        top: Math.max(
-          0,
-          Math.min(maximum, toPage(top / vh) * vh)
-        ),
+        top: Math.max(0, Math.min(maximum, toPage(top / vh) * vh)),
         left: 0,
         behavior: animate && !reduced ? 'smooth' : 'auto'
       });
@@ -497,15 +484,11 @@
       goToPixels(toStory(nextPosition) * vh, false);
     }
 
-    /* 새로운 마지막 장면 생성 */
+    /* 마지막 장면 생성 */
     const ending = document.createElement('section');
     ending.id = 'memory-ending';
     ending.hidden = true;
-
-    ending.setAttribute(
-      'aria-label',
-      '추억이 모여 열리는 하늘길'
-    );
+    ending.setAttribute('aria-label', '추억이 모여 열리는 하늘길');
 
     ending.innerHTML = `
       <div class="memory-stage">
@@ -514,7 +497,6 @@
         <div class="memory-bundle" aria-hidden="true"></div>
         <div class="memory-orbs" aria-hidden="true"></div>
         <div class="memory-flash" aria-hidden="true"></div>
-
         <p
           class="memory-caption dialogue"
           data-text="우리의 이야기는 이제 시작이라네"
@@ -532,22 +514,16 @@
 
     const endingOrbs = Array.from({ length: 6 }, () => {
       const image = document.createElement('img');
-
       image.src = 'assets/memory-orb.png';
       image.alt = '';
       image.className = 'memory-orb';
-
       ending.querySelector('.memory-orbs').append(image);
-
       return image;
     });
 
-    /* 요청한 문구 변경 */
+    /* 문구 변경 */
     [
-      [
-        '.map-heading h2',
-        '좀 더 자세히 살펴보자고'
-      ],
+      ['.map-heading h2', '좀 더 자세히 살펴보자고'],
       [
         '#accepted .dialogue',
         '하하, 그럴 줄 알았어\n자, 함께 추억을 만들어 보게!'
@@ -586,20 +562,17 @@
       ].filter(Boolean))
     ];
 
-    /* 모든 나레이션을 동일한 글자별 구조로 구성 */
+    /* 모든 나레이션을 같은 글자 구조로 구성 */
     dialogues.forEach(element => {
       let content = element.dataset.text;
 
       if (content === undefined) {
         content = [...element.childNodes]
-          .map(node =>
-            node.nodeName === 'BR' ? '\n' : node.textContent
-          )
+          .map(node => node.nodeName === 'BR' ? '\n' : node.textContent)
           .join('');
       }
 
       content = content.replaceAll('\\n', '\n');
-
       element.dataset.text = content;
       element.classList.add('dialogue');
       element.setAttribute('aria-label', content);
@@ -633,10 +606,7 @@
     });
 
     const mapImage = $('#map-world > img');
-
-    if (mapImage) {
-      mapImage.src = 'assets/korea-teal.png';
-    }
+    if (mapImage) mapImage.src = 'assets/korea-teal.png';
 
     let missionTitleVisible = false;
 
@@ -647,14 +617,12 @@
         if (!missionTitleVisible) {
           typingStarts.delete(narration.mission);
         }
-      }, {
-        threshold: 0.15
-      });
+      }, { threshold: 0.15 });
 
       observer.observe(narration.mission);
     }
 
-    /* 기존 별빛 효과 */
+    /* 별빛 효과 */
     const stars = $('#stars');
 
     if (stars) {
@@ -676,7 +644,7 @@
       }
     }
 
-    /* 첫 화면과 동일한 글자 등장 모션 */
+    /* 첫 화면과 동일한 나레이션 모션 */
     function reveal(element, progress) {
       if (!element?._chars) return;
 
@@ -688,8 +656,7 @@
           : smooth((progress - index / count * 0.8) / 0.2);
 
         character.style.opacity = value;
-        character.style.transform =
-          `translateY(${(1 - value) * 8}px)`;
+        character.style.transform = `translateY(${(1 - value) * 8}px)`;
       });
     }
 
@@ -741,10 +708,7 @@
       const number = $('#chapter-number');
       const name = $('#chapter-name');
 
-      if (number) {
-        number.textContent = String(index + 1).padStart(2, '0');
-      }
-
+      if (number) number.textContent = String(index + 1).padStart(2, '0');
       if (name) name.textContent = chapterLabels[index];
     }
 
@@ -758,12 +722,11 @@
       bounceUntil: 0
     };
 
-    const REPULSION_RADIUS = 190;
-    const MAX_SPEED = 760;
+    const REPULSION_RADIUS = 250;
+    const MAX_SPEED = 1900;
 
     function stopRefuse() {
       clearTimeout(pointerStopTimer);
-
       repel.pointer = null;
       repel.vx = 0;
       repel.vy = 0;
@@ -777,7 +740,6 @@
 
     function prepareRefuse() {
       const invitation = $('#invitation');
-
       if (!refuse || !invitation) return false;
 
       if (!refuse.classList.contains('has-moved')) {
@@ -791,7 +753,6 @@
 
         invitation.append(refuse);
         refuse.classList.add('has-moved');
-
         refuse.style.left = `${repel.x}px`;
         refuse.style.top = `${repel.y}px`;
       }
@@ -801,7 +762,6 @@
 
     function restoreRefuse() {
       stopRefuse();
-
       if (!refuse || !choices) return;
 
       const note = $('#dodge-note');
@@ -815,7 +775,6 @@
       refuse.hidden = false;
       refuse.inert = false;
       refuse.classList.remove('has-moved');
-
       refuse.style.left = '';
       refuse.style.top = '';
       refuse.style.opacity = '';
@@ -839,9 +798,7 @@
 
       if (!prepareRefuse()) return;
 
-      const sceneRect =
-        $('#invitation').getBoundingClientRect();
-
+      const sceneRect = $('#invitation').getBoundingClientRect();
       const width = refuse.offsetWidth;
       const height = refuse.offsetHeight;
       const centerX = repel.x + width / 2;
@@ -873,6 +830,7 @@
         }
       }
 
+      /* 수락 버튼과 대사를 가리지 않도록 회피 */
       const obstacles = [
         { element: accept, padding: 30 },
         { element: $('.invitation-copy'), padding: 18 },
@@ -884,21 +842,15 @@
 
         const rect = element.getBoundingClientRect();
 
-        const left =
-          rect.left - sceneRect.left - width / 2 - padding;
-        const right =
-          rect.right - sceneRect.left + width / 2 + padding;
-        const top =
-          rect.top - sceneRect.top - height / 2 - padding;
-        const bottom =
-          rect.bottom - sceneRect.top + height / 2 + padding;
+        const left = rect.left - sceneRect.left - width / 2 - padding;
+        const right = rect.right - sceneRect.left + width / 2 + padding;
+        const top = rect.top - sceneRect.top - height / 2 - padding;
+        const bottom = rect.bottom - sceneRect.top + height / 2 + padding;
 
         if (
           centerX <= left || centerX >= right ||
           centerY <= top || centerY >= bottom
-        ) {
-          return;
-        }
+        ) return;
 
         const exits = [
           { distance: centerX - left, x: -1, y: 0 },
@@ -916,14 +868,21 @@
         accelerationY += exit.y * force;
       });
 
-      repel.vx += accelerationX * dt;
-      repel.vy += accelerationY * dt;
-
+      /* 가속을 기다리지 않고 즉시 빠르게 회피 */
       const bouncing = performance.now() < repel.bounceUntil;
-      const friction = Math.exp(-(bouncing ? 0.8 : 5) * dt);
+      const forceLength = Math.hypot(accelerationX, accelerationY);
 
-      repel.vx *= friction;
-      repel.vy *= friction;
+      if (!bouncing && forceLength > 0) {
+        repel.vx = accelerationX / forceLength * MAX_SPEED;
+        repel.vy = accelerationY / forceLength * MAX_SPEED;
+      } else if (!bouncing) {
+        repel.vx = 0;
+        repel.vy = 0;
+      } else {
+        const friction = Math.exp(-0.8 * dt);
+        repel.vx *= friction;
+        repel.vy *= friction;
+      }
 
       const speed = Math.hypot(repel.vx, repel.vy);
 
@@ -936,20 +895,9 @@
       repel.y += repel.vy * dt;
 
       const minX = 16;
-      const maxX = Math.max(
-        minX,
-        stage.clientWidth - width - 16
-      );
-
-      const minY = Math.min(
-        75,
-        Math.max(8, stage.clientHeight - height - 16)
-      );
-
-      const maxY = Math.max(
-        minY,
-        stage.clientHeight - height - 85
-      );
+      const maxX = Math.max(minX, stage.clientWidth - width - 16);
+      const minY = Math.min(75, Math.max(8, stage.clientHeight - height - 16));
+      const maxY = Math.max(minY, stage.clientHeight - height - 85);
 
       const hitLeft = repel.x < minX;
       const hitRight = repel.x > maxX;
@@ -964,13 +912,11 @@
         let directionY = hitTop ? 1 : hitBottom ? -1 : 0;
 
         if (!directionX) {
-          directionX =
-            repel.x < (minX + maxX) / 2 ? 0.75 : -0.75;
+          directionX = repel.x < (minX + maxX) / 2 ? 0.75 : -0.75;
         }
 
         if (!directionY) {
-          directionY =
-            repel.y < (minY + maxY) / 2 ? 0.75 : -0.75;
+          directionY = repel.y < (minY + maxY) / 2 ? 0.75 : -0.75;
         }
 
         const length = Math.hypot(directionX, directionY);
@@ -1000,7 +946,6 @@
 
     refuse?.addEventListener('pointerdown', event => {
       event.preventDefault();
-
       if (!prepareRefuse()) return;
 
       repel.pointer = {
@@ -1009,27 +954,18 @@
         touch: event.pointerType === 'touch'
       };
 
-      scheduleRefuseStop(
-        event.pointerType === 'touch' ? 300 : 70
-      );
+      scheduleRefuseStop(event.pointerType === 'touch' ? 300 : 70);
     });
 
-    refuse?.addEventListener('click', event => {
-      event.preventDefault();
-    });
-
+    refuse?.addEventListener('click', event => event.preventDefault());
     document.addEventListener('pointercancel', stopRefuse);
 
-    /*
-     * 기존 고래 Canvas 변형 유지.
-     * 지느러미를 별도 분리한 애니메이션은 아닙니다.
-     */
+    /* 기존 고래 이미지 변형 효과 유지 */
     const swimSource = $('#whale-flight img');
     const swimCanvas = document.createElement('canvas');
     const swimContext = swimCanvas.getContext('2d');
 
     swimCanvas.setAttribute('aria-hidden', 'true');
-
     swimCanvas.style.cssText = `
       position:absolute;
       left:0;
@@ -1045,22 +981,14 @@
 
     function drawSwimmingWhale(now) {
       if (
-        !swimSource ||
-        !swimContext ||
-        !swimSource.complete ||
-        !swimSource.naturalWidth
-      ) {
-        return;
-      }
+        !swimSource || !swimContext ||
+        !swimSource.complete || !swimSource.naturalWidth
+      ) return;
 
       const sourceWidth = swimSource.naturalWidth;
       const sourceHeight = swimSource.naturalHeight;
       const width = Math.min(sourceWidth, 1400);
-
-      const height = Math.round(
-        width * sourceHeight / sourceWidth
-      );
-
+      const height = Math.round(width * sourceHeight / sourceWidth);
       const padding = Math.ceil(height * 0.12);
 
       if (
@@ -1071,9 +999,7 @@
         swimCanvas.height = height + padding * 2;
       }
 
-      swimContext.clearRect(
-        0, 0, swimCanvas.width, swimCanvas.height
-      );
+      swimContext.clearRect(0, 0, swimCanvas.width, swimCanvas.height);
 
       const phase = now / 1000 * Math.PI * 2 / 3.6;
       const strips = reduced ? 1 : 100;
@@ -1082,10 +1008,7 @@
         const u = (i + 0.5) / strips;
 
         const finWeight = Math.pow(
-          Math.max(
-            0,
-            (Math.abs(u - 0.5) - 0.17) / 0.33
-          ),
+          Math.max(0, (Math.abs(u - 0.5) - 0.17) / 0.33),
           1.6
         );
 
@@ -1103,10 +1026,7 @@
 
         swimContext.drawImage(
           swimSource,
-          sourceX,
-          0,
-          sourceStripWidth,
-          sourceHeight,
+          sourceX, 0, sourceStripWidth, sourceHeight,
           i * width / strips,
           padding + bend,
           sourceStripWidth * width / sourceWidth,
@@ -1117,12 +1037,9 @@
       swimSource.style.visibility = 'hidden';
     }
 
-    /* 마지막 장면의 스크롤 길이 */
     function measureEnding() {
       if (ending.hidden) return;
-
-      ending.style.height =
-        `${Math.max(1, endingStage.clientHeight) * 6}px`;
+      ending.style.height = `${Math.max(1, endingStage.clientHeight) * 6}px`;
     }
 
     function renderEnding(now) {
@@ -1140,10 +1057,7 @@
       const radiusY = Math.min(height * 0.29, 240);
       const born = seg(p, 0.04, 0.15);
 
-      /*
-       * 1. 구체 등장
-       * 2. 구체 6개가 보따리 중앙까지 모두 이동
-       */
+      /* 구체 6개가 보따리 중앙으로 모임 */
       endingOrbs.forEach((orb, index) => {
         const gathered = seg(
           p,
@@ -1151,23 +1065,17 @@
           0.44 + index * 0.015
         );
 
-        const angle =
-          -Math.PI / 2 + index * Math.PI / 3;
+        const angle = -Math.PI / 2 + index * Math.PI / 3;
 
         const float = reduced
           ? 0
           : Math.sin(now / 1000 * 1.5 + index) *
             8 * (1 - gathered);
 
-        const x =
-          Math.cos(angle) * radiusX * (1 - gathered);
+        const x = Math.cos(angle) * radiusX * (1 - gathered);
+        const y = Math.sin(angle) * radiusY * (1 - gathered) + float;
 
-        const y =
-          Math.sin(angle) * radiusY * (1 - gathered) +
-          float;
-
-        orb.style.opacity =
-          born * (1 - seg(gathered, 0.94, 1));
+        orb.style.opacity = born * (1 - seg(gathered, 0.94, 1));
 
         orb.style.transform = `
           translate(
@@ -1178,25 +1086,21 @@
         `;
       });
 
-      endingBundle.style.opacity =
-        1 - seg(p, 0.60, 0.64);
+      endingBundle.style.opacity = 1 - seg(p, 0.60, 0.64);
 
       const glow = 12 + seg(p, 0.35, 0.54) * 42;
-
-      endingBundle.style.filter =
-        `drop-shadow(0 0 ${glow}px #ffe6a0)`;
+      endingBundle.style.filter = `drop-shadow(0 0 ${glow}px #ffe6a0)`;
 
       /*
-       * 마지막 구체 도착: p = 0.515
-       * 빛 확산 시작:      p = 0.54
-       * 화면 전체 덮임:   p = 0.62
-       * 배경 전환:        p = 0.64 ~ 0.66
-       * 흰빛 걷힘:        p = 0.72 ~ 0.82
+       * 모든 구체 도착: 0.515
+       * 중앙 빛 확산:   0.54 ~ 0.62
+       * 탑승 배경 전환: 0.64 ~ 0.66
+       * 흰빛 걷힘:     0.72 ~ 0.82
        */
-      const expansion = seg(p, 0.54, 0.62);
-
       const diameter =
-        Math.hypot(width, height) * 1.15 * expansion;
+        Math.hypot(width, height) *
+        1.15 *
+        seg(p, 0.54, 0.62);
 
       endingFlash.style.width = `${diameter}px`;
       endingFlash.style.height = `${diameter}px`;
@@ -1205,11 +1109,7 @@
         seg(p, 0.54, 0.56) *
         (1 - seg(p, 0.72, 0.82));
 
-      /*
-       * 이 시점에는 흰 원이 화면 전체를 덮고 있습니다.
-       */
-      endingImage.style.opacity =
-        seg(p, 0.64, 0.66);
+      endingImage.style.opacity = seg(p, 0.64, 0.66);
 
       const showText = p >= 0.82;
       const caption = narration.finale;
@@ -1225,16 +1125,12 @@
       }
     }
 
-    /* 전체 장면 렌더링 */
     let previousTime = 0;
 
     function render(now) {
       const dt = Math.min(
         0.033,
-        Math.max(
-          0.001,
-          (now - (previousTime || now)) / 1000
-        )
+        Math.max(0.001, (now - (previousTime || now)) / 1000)
       );
 
       previousTime = now;
@@ -1244,10 +1140,7 @@
         Math.max(0, scrollTop() / vh)
       );
 
-      /*
-       * 선착장 나레이션 완료 전에는
-       * 중앙 고래 접근 구간으로 넘어가지 않습니다.
-       */
+      /* 선착장 나레이션 완료 후 고래 접근 */
       const nightStarted = typingStarts.get(narration.night);
 
       if (
@@ -1256,8 +1149,7 @@
         s < 7.35 &&
         nightStarted !== undefined
       ) {
-        const duration =
-          narration.night._chars.length * 36 + 500;
+        const duration = narration.night._chars.length * 36 + 500;
 
         if (now - nightStarted < duration) {
           s = 6.1;
@@ -1266,23 +1158,15 @@
       }
 
       const introFade = 1 - seg(s, 0.85, 1.25);
-
-      const mapFade =
-        seg(s, 0.95, 1.45) *
-        (1 - seg(s, 3.05, 3.8));
-
-      const harborFade =
-        seg(s, 3.2, 4) *
-        (1 - seg(s, 6.65, 7.35));
+      const mapFade = seg(s, 0.95, 1.45) * (1 - seg(s, 3.05, 3.8));
+      const harborFade = seg(s, 3.2, 4) * (1 - seg(s, 6.65, 7.35));
 
       const inviteFade =
         seg(s, 6.9, 7.65) *
         (accepted ? 1 - seg(s, 9.15, 9.75) : 1);
 
-      const acceptedFade =
-        accepted ? seg(s, 9.15, 9.85) : 0;
+      const acceptedFade = accepted ? seg(s, 9.15, 9.85) : 0;
 
-      /* 첫 화면 */
       visibility($('#intro'), introFade);
 
       reveal(
@@ -1291,12 +1175,9 @@
           ((narration.intro?._chars.length || 1) * 36 + 500)
       );
 
-      /* 지도 */
       visibility($('#map-scene'), mapFade);
 
-      if (mapFade > 0.01) {
-        type(narration.map, 0, now);
-      }
+      if (mapFade > 0.01) type(narration.map, 0, now);
 
       const z = seg(s, 2.05, 3.55);
       const mapWorld = $('#map-world');
@@ -1314,8 +1195,6 @@
       }
 
       opacity('.map-heading', 1 - seg(s, 2.1, 2.65));
-
-      /* 선착장 */
       visibility($('#harbor'), harborFade);
 
       const harborImage = $('#harbor-image');
@@ -1328,40 +1207,25 @@
       }
 
       const arrival =
-        seg(s, 3.65, 4.1) *
-        (1 - seg(s, 4.45, 4.8));
+        seg(s, 3.65, 4.1) * (1 - seg(s, 4.45, 4.8));
 
       const night =
-        seg(s, 5, 5.2) *
-        (1 - seg(s, 6.4, 6.8));
+        seg(s, 5, 5.2) * (1 - seg(s, 6.4, 6.8));
 
       opacity('#arrival-caption', arrival);
       opacity('#night-caption', night);
 
-      $('#arrival-caption')?.setAttribute(
-        'aria-hidden',
-        String(arrival < 0.01)
-      );
+      $('#arrival-caption')?.setAttribute('aria-hidden', String(arrival < 0.01));
+      $('#night-caption')?.setAttribute('aria-hidden', String(night < 0.01));
 
-      $('#night-caption')?.setAttribute(
-        'aria-hidden',
-        String(night < 0.01)
-      );
+      if (arrival > 0.01) type(narration.arrival, 0, now);
+      if (night > 0.01) type(narration.night, 0, now);
 
-      if (arrival > 0.01) {
-        type(narration.arrival, 0, now);
-      }
-
-      if (night > 0.01) {
-        type(narration.night, 0, now);
-      }
-
-      /* 중앙 고래 접근 */
+      /* 중앙에서 다가오는 고래 */
       const whaleFlight = $('#whale-flight');
 
       if (whaleFlight) {
         const image = whaleFlight.querySelector('img');
-
         const width = stage.clientWidth;
         const height = stage.clientHeight;
 
@@ -1370,11 +1234,7 @@
             ? image.naturalWidth / image.naturalHeight
             : 1.5;
 
-        const baseWidth = Math.min(
-          width * 0.72,
-          height * 0.85
-        );
-
+        const baseWidth = Math.min(width * 0.72, height * 0.85);
         const baseHeight = baseWidth / ratio;
 
         const fullScale = Math.max(
@@ -1399,9 +1259,7 @@
           ['animation', 'none'],
           ['transition', 'none']
         ].forEach(([property, value]) => {
-          whaleFlight.style.setProperty(
-            property, value, 'important'
-          );
+          whaleFlight.style.setProperty(property, value, 'important');
         });
 
         whaleFlight.style.transformOrigin = '50% 50%';
@@ -1413,8 +1271,7 @@
             7 * (1 - approach);
 
         whaleFlight.style.transform =
-          `translate(-50%,calc(-50% + ${bob}px))
-           scale(${scale})`;
+          `translate(-50%,calc(-50% + ${bob}px)) scale(${scale})`;
 
         if (image) {
           image.style.display = 'block';
@@ -1425,22 +1282,14 @@
           image.style.transform = 'none';
         }
 
-        if (appear > 0 && harborFade > 0) {
-          drawSwimmingWhale(now);
-        }
+        if (appear > 0 && harborFade > 0) drawSwimmingWhale(now);
       }
 
-      /* 보따리와 참여 제안 */
       visibility($('#invitation'), inviteFade);
 
-      if (inviteFade > 0.01) {
-        type(narration.offer, 0, now);
-      }
+      if (inviteFade > 0.01) type(narration.offer, 0, now);
 
-      opacity(
-        '.invitation-question',
-        seg(s, 7.95, 8.25)
-      );
+      opacity('.invitation-question', seg(s, 7.95, 8.25));
 
       if (inviteFade > 0.01 && s >= 7.95) {
         type(narration.question, 0, now);
@@ -1452,33 +1301,23 @@
       if (choices) {
         choices.style.opacity = choiceOpacity;
         choices.inert = !choiceReady;
-
-        choices.setAttribute(
-          'aria-hidden',
-          String(!choiceReady)
-        );
+        choices.setAttribute('aria-hidden', String(!choiceReady));
       }
 
       if (refuse?.classList.contains('has-moved')) {
         refuse.style.opacity = choiceOpacity;
         refuse.inert = !choiceReady;
-
-        refuse.style.pointerEvents =
-          choiceReady ? 'auto' : 'none';
+        refuse.style.pointerEvents = choiceReady ? 'auto' : 'none';
       }
 
-      /* 수락 후 나레이션 */
       visibility($('#accepted'), acceptedFade);
 
-      if (acceptedFade > 0.01) {
-        type(narration.accepted, 0, now);
-      }
+      if (acceptedFade > 0.01) type(narration.accepted, 0, now);
 
       const progress = $('#progress-bar');
 
       if (progress) {
-        progress.style.width =
-          `${clamp(s / storyLength) * 100}%`;
+        progress.style.width = `${clamp(s / storyLength) * 100}%`;
       }
 
       setChapter(
@@ -1489,15 +1328,10 @@
       );
 
       if (continueButton) {
-        const waitingForChoice =
-          s > 8.4 && !accepted;
+        const waitingForChoice = s > 8.4 && !accepted;
 
-        continueButton.style.opacity =
-          waitingForChoice ? 0 : 1;
-
-        continueButton.style.visibility =
-          waitingForChoice ? 'hidden' : 'visible';
-
+        continueButton.style.opacity = waitingForChoice ? 0 : 1;
+        continueButton.style.visibility = waitingForChoice ? 'hidden' : 'visible';
         continueButton.disabled = waitingForChoice;
 
         continueButton.textContent =
@@ -1508,13 +1342,10 @@
               : '다음 이야기로 ↓';
       }
 
-      if (missionTitleVisible) {
-        type(narration.mission, 0, now);
-      }
+      if (missionTitleVisible) type(narration.mission, 0, now);
 
       renderEnding(now);
       updateRefuse(dt);
-
       requestAnimationFrame(render);
     }
 
@@ -1544,10 +1375,7 @@
     $$('[data-jump]').forEach(button => {
       button.addEventListener('click', () => {
         const destination = Number(button.dataset.jump);
-
-        if (Number.isFinite(destination)) {
-          jump(destination);
-        }
+        if (Number.isFinite(destination)) jump(destination);
       });
     });
 
@@ -1589,17 +1417,71 @@
       jump(8.6, false);
     });
 
-    accept?.addEventListener('click', () => {
-      if (accepted) return;
+    /* 수락 후 페이드아웃 → 장면 교체 → 페이드인 */
+    accept?.addEventListener('click', async () => {
+      if (accepted || accept.disabled) return;
 
-      accepted = true;
-      storyLength = 10.6;
-
-      if (refuse) refuse.hidden = true;
-
+      accept.disabled = true;
       stopRefuse();
-      measure();
-      jump(10.1);
+
+      const duration = reduced ? 0 : 420;
+
+      const wait = milliseconds =>
+        new Promise(resolve => setTimeout(resolve, milliseconds));
+
+      const nextFrame = () =>
+        new Promise(resolve => requestAnimationFrame(resolve));
+
+      const veil = document.createElement('div');
+      veil.setAttribute('aria-hidden', 'true');
+
+      veil.style.cssText = `
+        position:fixed;
+        inset:0;
+        z-index:9999;
+        background:#081725;
+        opacity:0;
+        pointer-events:auto;
+        touch-action:none;
+        transition:opacity ${duration}ms ease-in-out;
+      `;
+
+      veil.addEventListener('wheel', event => {
+        event.preventDefault();
+      }, { passive: false });
+
+      veil.addEventListener('touchmove', event => {
+        event.preventDefault();
+      }, { passive: false });
+
+      document.body.append(veil);
+
+      try {
+        await nextFrame();
+        await nextFrame();
+
+        veil.style.opacity = '1';
+        await wait(duration);
+
+        accepted = true;
+        storyLength = 10.6;
+
+        if (refuse) refuse.hidden = true;
+
+        typingStarts.delete(narration.accepted);
+
+        measure();
+        jump(10.1, false);
+
+        await nextFrame();
+        await nextFrame();
+
+        veil.style.opacity = '0';
+        await wait(duration);
+      } finally {
+        veil.remove();
+        accept.disabled = false;
+      }
     });
 
     function openMissions() {
@@ -1607,7 +1489,6 @@
 
       missions.hidden = false;
       ending.hidden = false;
-
       measureEnding();
 
       missions.scrollIntoView({
@@ -1616,33 +1497,20 @@
       });
     }
 
-    $('#open-missions')?.addEventListener(
-      'click',
-      openMissions
-    );
+    $('#open-missions')?.addEventListener('click', openMissions);
 
     /* 마우스 휠 */
     stage.addEventListener('wheel', event => {
       if (event.ctrlKey || event.metaKey) return;
-
-      if (
-        Math.abs(event.deltaX) >
-        Math.abs(event.deltaY)
-      ) {
-        return;
-      }
+      if (Math.abs(event.deltaX) > Math.abs(event.deltaY)) return;
 
       const multiplier = event.deltaMode === 1
         ? 16
-        : event.deltaMode === 2
-          ? vh
-          : 1;
+        : event.deltaMode === 2 ? vh : 1;
 
       event.preventDefault();
       changeScroll(event.deltaY * multiplier);
-    }, {
-      passive: false
-    });
+    }, { passive: false });
 
     /* 모바일 스크롤 */
     stage.addEventListener('touchstart', event => {
@@ -1655,14 +1523,10 @@
         x: event.touches[0].clientX,
         y: event.touches[0].clientY
       };
-    }, {
-      passive: true
-    });
+    }, { passive: true });
 
     stage.addEventListener('touchmove', event => {
-      if (!touchPoint || event.touches.length !== 1) {
-        return;
-      }
+      if (!touchPoint || event.touches.length !== 1) return;
 
       const touch = event.touches[0];
       const deltaX = touchPoint.x - touch.clientX;
@@ -1674,13 +1538,10 @@
       };
 
       if (Math.abs(deltaX) > Math.abs(deltaY)) return;
-
       if (event.cancelable) event.preventDefault();
 
       changeScroll(deltaY);
-    }, {
-      passive: false
-    });
+    }, { passive: false });
 
     stage.addEventListener('touchend', () => {
       touchPoint = null;
@@ -1695,23 +1556,14 @@
       const tag = event.target?.tagName;
 
       if (
-        [
-          'INPUT', 'TEXTAREA', 'SELECT',
-          'BUTTON', 'A', 'SUMMARY'
-        ].includes(tag) ||
+        ['INPUT', 'TEXTAREA', 'SELECT', 'BUTTON', 'A', 'SUMMARY'].includes(tag) ||
         event.target?.isContentEditable ||
         event.ctrlKey ||
         event.metaKey ||
         event.altKey
-      ) {
-        return;
-      }
+      ) return;
 
-      if (
-        rawScrollTop() >= story.offsetHeight - vh
-      ) {
-        return;
-      }
+      if (rawScrollTop() >= story.offsetHeight - vh) return;
 
       if (event.key === 'ArrowDown') {
         event.preventDefault();
@@ -1719,10 +1571,7 @@
       } else if (event.key === 'ArrowUp') {
         event.preventDefault();
         changeScroll(-80);
-      } else if (
-        event.key === 'PageDown' ||
-        event.key === ' '
-      ) {
+      } else if (event.key === 'PageDown' || event.key === ' ') {
         event.preventDefault();
         changeScroll(vh * 0.8);
       } else if (event.key === 'PageUp') {
@@ -1740,17 +1589,12 @@
         const wasInsideStory = oldPosition <= storyLength;
 
         restoreRefuse();
-
-        if (accepted && refuse) {
-          refuse.hidden = true;
-        }
+        if (accepted && refuse) refuse.hidden = true;
 
         measure();
         measureEnding();
 
-        if (wasInsideStory) {
-          jump(oldPosition, false);
-        }
+        if (wasInsideStory) jump(oldPosition, false);
       }, 150);
     });
 
@@ -1770,11 +1614,7 @@
   }
 
   if (document.readyState === 'loading') {
-    document.addEventListener(
-      'DOMContentLoaded',
-      start,
-      { once: true }
-    );
+    document.addEventListener('DOMContentLoaded', start, { once: true });
   } else {
     start();
   }
