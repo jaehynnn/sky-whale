@@ -335,9 +335,9 @@
       vy: 0,
       pointer: null
     };
-
-    const REPULSION_RADIUS = 165;
-    const MAX_SPEED = 440;
+    
+const REPULSION_RADIUS = 190;
+const MAX_SPEED = 760;
 
     function prepareRefuse() {
       const invitation = $('#invitation');
@@ -428,7 +428,7 @@
 
         if (distance < REPULSION_RADIUS) {
           const proximity = 1 - distance / REPULSION_RADIUS;
-          const force = 2600 * proximity * proximity;
+          const force = 5200 * proximity * proximity;
 
           accelerationX += dx / distance * force;
           accelerationY += dy / distance * force;
@@ -676,21 +676,94 @@
         type(dialogues[2], seg(s, 5.05, 6.1), now);
       }
 
-      const fly = seg(s, 5.7, 6.9);
-      const whaleFlight = $('#whale-flight');
+/*
+ * 선착장 고래:
+ * 중앙의 먼 곳에서 등장 → 정면으로 접근 →
+ * 화면을 가득 채움 → 선착장과 함께 다음 장면으로 전환.
+ */
+const whaleFlight = $('#whale-flight');
 
-      if (whaleFlight) {
-        whaleFlight.style.left = `${-85 + 145 * fly}%`;
+if (whaleFlight) {
+  const image = whaleFlight.querySelector('img');
 
-        whaleFlight.style.opacity = reduced
-          ? 0
-          : seg(s, 5.7, 5.95) *
-            (1 - seg(s, 6.65, 6.95));
+  const screenWidth = stage.clientWidth;
+  const screenHeight = stage.clientHeight;
 
-        whaleFlight.style.transform =
-          `scale(${0.45 + 1.25 * fly})
-           rotate(${-12 + 15 * fly}deg)`;
-      }
+  const imageRatio =
+    image?.naturalWidth && image?.naturalHeight
+      ? image.naturalWidth / image.naturalHeight
+      : 1.5;
+
+  const baseWidth = Math.min(
+    screenWidth * 0.72,
+    screenHeight * 0.85
+  );
+
+  const baseHeight = baseWidth / imageRatio;
+
+  /*
+   * 이미지의 투명 여백도 고려해
+   * 화면보다 충분히 크게 확대합니다.
+   */
+  const fullScale = Math.max(
+    screenWidth / baseWidth,
+    screenHeight / baseHeight
+  ) * 1.8;
+
+  const approach = seg(s, 5.7, 6.6);
+  const appear = seg(s, 5.7, 5.95);
+
+  const scale = reduced
+    ? 0.9
+    : 0.18 + (fullScale - 0.18) * approach;
+
+  whaleFlight.style.setProperty(
+    'position', 'absolute', 'important'
+  );
+
+  whaleFlight.style.setProperty(
+    'left', '50%', 'important'
+  );
+
+  whaleFlight.style.setProperty(
+    'top', '55%', 'important'
+  );
+
+  whaleFlight.style.setProperty(
+    'width', `${baseWidth}px`, 'important'
+  );
+
+  whaleFlight.style.setProperty(
+    'height', `${baseHeight}px`, 'important'
+  );
+
+  whaleFlight.style.setProperty(
+    'margin', '0', 'important'
+  );
+
+  whaleFlight.style.setProperty(
+    'animation', 'none', 'important'
+  );
+
+  whaleFlight.style.setProperty(
+    'transition', 'none', 'important'
+  );
+
+  whaleFlight.style.transformOrigin = '50% 50%';
+  whaleFlight.style.opacity = appear;
+
+  whaleFlight.style.transform =
+    `translate(-50%, -50%) scale(${scale})`;
+
+  if (image) {
+    image.style.display = 'block';
+    image.style.width = '100%';
+    image.style.height = '100%';
+    image.style.objectFit = 'contain';
+    image.style.animation = 'none';
+    image.style.transform = 'none';
+  }
+}
 
       visibility($('#invitation'), inviteFade);
 
