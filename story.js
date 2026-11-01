@@ -554,15 +554,27 @@ if (hitLeft || hitRight || hitTop || hitBottom) {
       refuse.style.top = `${repel.y.toFixed(2)}px`;
     }
 
-    stage.addEventListener('pointermove', event => {
-      if (event.pointerType === 'touch') return;
+let pointerStopTimer;
 
-      repel.pointer = {
-        x: event.clientX,
-        y: event.clientY,
-        touch: false
-      };
-    });
+stage.addEventListener('pointermove', event => {
+  if (event.pointerType === 'touch') return;
+
+  repel.pointer = {
+    x: event.clientX,
+    y: event.clientY,
+    touch: false
+  };
+
+  clearTimeout(pointerStopTimer);
+
+  pointerStopTimer = setTimeout(() => {
+    // 커서가 멈추면 반발력·관성·반사를 모두 멈춥니다.
+    repel.pointer = null;
+    repel.vx = 0;
+    repel.vy = 0;
+    repel.bounceUntil = 0;
+  }, 70);
+});
 
     stage.addEventListener('pointerleave', () => {
       repel.pointer = null;
@@ -570,6 +582,12 @@ if (hitLeft || hitRight || hitTop || hitBottom) {
 
     refuse?.addEventListener('pointerdown', event => {
       event.preventDefault();
+
+      if (!repel.pointer) {
+  repel.vx = 0;
+  repel.vy = 0;
+  return;
+}
 
       if (!prepareRefuse()) return;
 
