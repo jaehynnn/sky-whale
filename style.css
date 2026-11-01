@@ -414,3 +414,167 @@ button.accept {
     animation: none !important;
   }
 }
+/* 요청한 보조 문구 숨김 */
+#intro .eyebrow,
+.map-heading .eyebrow,
+#arrival-caption .eyebrow,
+#night-caption .eyebrow,
+#accepted .eyebrow,
+.mission-heading .eyebrow,
+.marker-label,
+#dodge-note {
+  display: none !important;
+}
+
+/* 수락 후 보조 설명만 숨김 — 나레이션은 유지 */
+.accepted-copy > p:not(.eyebrow):not(.dialogue) {
+  display: none !important;
+}
+
+/* 기존 도입 장식 숨김 */
+#intro-art {
+  display: none !important;
+}
+
+/* 첫 장면: 고래가 있는 밤하늘 + 검정 30% */
+#intro {
+  background:
+    linear-gradient(
+      rgba(0, 0, 0, .30),
+      rgba(0, 0, 0, .30)
+    ),
+    url("assets/night-whales.png") center / cover no-repeat;
+}
+
+/* 공통 배경: 고래 없는 밤하늘 + 검정 30% */
+#stage > .sky {
+  background:
+    linear-gradient(
+      rgba(0, 0, 0, .30),
+      rgba(0, 0, 0, .30)
+    ),
+    url("assets/night-clean.png") center / cover no-repeat;
+}
+
+/* 기존 달·안개·오로라 대신 새 배경 사용 */
+#stage > .sky .moon,
+#stage > .sky .mist,
+#stage > .sky .aurora {
+  display: none !important;
+}
+
+/* 지도·보따리·수락 장면 뒤로 공통 밤하늘 표시 */
+#map-scene,
+#invitation,
+#accepted {
+  background: transparent !important;
+}
+
+/* 지도는 투명 외곽선 이미지만 확대 */
+#map-world > img {
+  background: transparent;
+  mask-image: none !important;
+  -webkit-mask-image: none !important;
+  filter: drop-shadow(0 0 3px #76d8cc35);
+}
+
+/* 지도 표시점은 유지 */
+.map-marker {
+  display: block;
+}
+
+.marker-dot {
+  background: #c5fff4;
+  box-shadow: 0 0 12px #8be9da;
+}
+
+.marker-ring {
+  border-color: #a3f0df99;
+}
+
+/* 모든 주요 나레이션에 같은 기울임 */
+.dialogue,
+.map-heading h2,
+#mission-title {
+  font-style: italic !important;
+  color: #fff;
+  text-shadow:
+    0 2px 8px #000b,
+    0 0 24px #030817cc;
+}
+
+/* 이탤릭 글자 끝이 잘리지 않게 여유 확보 */
+.dialogue .word {
+  padding-right: .08em;
+  margin-right: -.08em;
+}
+
+/* 보따리 화면의 질문 문구 */
+.invitation-question.dialogue {
+  margin-top: 20px;
+  font-size: clamp(20px, 2vw, 27px);
+}
+
+/* 미션 화면도 동일한 공통 배경 */
+#missions {
+  background:
+    linear-gradient(
+      rgba(0, 0, 0, .30),
+      rgba(0, 0, 0, .30)
+    ),
+    url("assets/night-clean.png") center / cover no-repeat;
+}
+
+/* 미션 카드 테두리의 은은한 빛 */
+.mission-grid > details,
+.mission-card {
+  border-color: #e6d1a386;
+
+  box-shadow:
+    inset 0 0 0 5px #0c14254d,
+    inset 0 0 18px #a8b6ef0d,
+    0 0 9px #d7c3ff18,
+    0 0 24px #9bbce91c,
+    0 12px 35px #02071540;
+
+  animation: mission-frame-glow 5s ease-in-out infinite;
+}
+
+.mission-grid > details:nth-child(2) {
+  animation-delay: -1.2s;
+}
+
+.mission-grid > details:nth-child(3) {
+  animation-delay: -2.4s;
+}
+
+.mission-grid > details:nth-child(4) {
+  animation-delay: -3.6s;
+}
+
+@keyframes mission-frame-glow {
+  0%, 100% {
+    border-color: #e6d1a370;
+    box-shadow:
+      inset 0 0 0 5px #0c14254d,
+      0 0 9px #d7c3ff12,
+      0 0 22px #9bbce914,
+      0 12px 35px #02071540;
+  }
+
+  50% {
+    border-color: #f0dab29e;
+    box-shadow:
+      inset 0 0 0 5px #0c14254d,
+      0 0 12px #e3d1ff26,
+      0 0 30px #9bbce926,
+      0 12px 35px #02071540;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mission-grid > details,
+  .mission-card {
+    animation: none !important;
+  }
+}
