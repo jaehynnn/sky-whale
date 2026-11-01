@@ -1351,25 +1351,32 @@
         if (appear > 0 && harborFade > 0) drawSwimmingWhale(now);
       }
 
-      /* 본문과 질문을 같은 시점에 등장 */
-      visibility($('#invitation'), inviteFade);
-      opacity('.invitation-question', 1);
+/* 본문 완료 → 잠깐 유지 → 질문 등장 */
+visibility($('#invitation'), inviteFade);
 
-      if (inviteFade > 0.01) {
-        if (!typingStarts.has(narration.offer)) {
-          typingStarts.set(narration.offer, now);
-        }
+if (inviteFade > 0.01) {
+  type(narration.offer, 0, now);
 
-        if (!typingStarts.has(narration.question)) {
-          typingStarts.set(
-            narration.question,
-            typingStarts.get(narration.offer)
-          );
-        }
+  const offerStart = typingStarts.get(narration.offer);
+  const offerDuration =
+    narration.offer._chars.length * 36 + 500;
 
-        type(narration.offer, 0, now);
-        type(narration.question, 0, now);
-      }
+  const questionReady =
+    now >= offerStart + offerDuration + 250;
+
+  opacity('.invitation-question', questionReady ? 1 : 0);
+
+  if (questionReady) {
+    type(narration.question, 0, now);
+  } else {
+    typingStarts.delete(narration.question);
+    reveal(narration.question, 0);
+  }
+} else {
+  opacity('.invitation-question', 0);
+  typingStarts.delete(narration.offer);
+  typingStarts.delete(narration.question);
+}
 
       const choiceReady = s >= 8.15 && !accepted;
       const choiceOpacity = seg(s, 8.05, 8.45);
