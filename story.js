@@ -9,7 +9,7 @@
     const story = $('#story');
 
     if (!stage || !story) {
-      console.error('필수 요소 #stage 또는 #story가 없습니다.');
+      console.error('#stage 또는 #story 요소가 없습니다.');
       return;
     }
 
@@ -37,21 +37,19 @@
     let accepted = false;
     let storyLength = 9.6;
     let vh = 1;
-    let position = 0;
     let currentChapter = -1;
     let introStart = performance.now();
-    let lastDodge = 0;
-    let dodgeCount = 0;
     let resizeTimer;
     let touchPoint = null;
 
     const typingStarts = new WeakMap();
 
     /*
-     * 기존 CSS와 관계없이 스크롤 영역과 버튼의
-     * 클릭 가능 상태를 명확하게 설정합니다.
+     * 스크롤·클릭 보정 및 요청한 화면 요소 숨김.
+     * 기존 요소는 스크립트 연결을 위해 DOM에 유지합니다.
      */
     const repairStyle = document.createElement('style');
+
     repairStyle.textContent = `
       html {
         height: auto !important;
@@ -78,7 +76,7 @@
         top: 0 !important;
         width: 100% !important;
         overflow: hidden !important;
-        touch-action: none;
+        touch-action: pan-x pinch-zoom;
       }
 
       #stage .scene {
@@ -101,14 +99,33 @@
         pointer-events: none !important;
       }
 
-      #stage .story-footer button,
-      #stage .pagination button {
+      #stage .story-footer button {
         pointer-events: auto !important;
       }
 
       #continue {
         cursor: pointer;
         min-height: 44px;
+      }
+
+      /* 왼쪽 위 나뭇잎 그림과 사이트명 */
+      .masthead #brand {
+        display: none !important;
+      }
+
+      /* '처음으로' 버튼은 오른쪽 위에 유지 */
+      .masthead {
+        justify-content: flex-end !important;
+      }
+
+      /* 왼쪽 아래 장면 번호와 설명 */
+      #stage .story-footer .chapter {
+        display: none !important;
+      }
+
+      /* 오른쪽 아래 동그라미 진행 표시 */
+      #stage .story-footer .pagination {
+        display: none !important;
       }
 
       #choices {
@@ -120,15 +137,19 @@
         z-index: 120 !important;
         margin: 0 !important;
         transform: none !important;
-        transition:
-          left .42s cubic-bezier(.22,.8,.32,1),
-          top .42s cubic-bezier(.22,.8,.32,1);
+        transition: none !important;
+        will-change: left, top;
+      }
+
+      #dodge-message {
+        display: none !important;
       }
 
       [hidden] {
         display: none !important;
       }
     `;
+
     document.head.append(repairStyle);
 
     function scrollTop() {
@@ -138,9 +159,6 @@
     }
 
     function measure() {
-      const previousVh = vh;
-      const previousPosition = scrollTop() / previousVh;
-
       vh = Math.max(
         1,
         document.documentElement.clientHeight || window.innerHeight
@@ -153,20 +171,16 @@
         `${Math.ceil((storyLength + 1) * vh)}px`,
         'important'
       );
-
-      return previousPosition;
     }
 
     function goToPixels(top, animate = true) {
-      const max = Math.max(
+      const maximum = Math.max(
         0,
         document.documentElement.scrollHeight - window.innerHeight
       );
 
-      const destination = Math.max(0, Math.min(max, top));
-
       window.scrollTo({
-        top: destination,
+        top: Math.max(0, Math.min(maximum, top)),
         left: 0,
         behavior: animate && !reduced ? 'smooth' : 'auto'
       });
@@ -177,12 +191,13 @@
     }
 
     function changeScroll(delta) {
-      if (!Number.isFinite(delta)) return;
-      goToPixels(scrollTop() + delta, false);
+      if (Number.isFinite(delta)) {
+        goToPixels(scrollTop() + delta, false);
+      }
     }
 
     /*
-     * 대사를 글자별 요소로 구성합니다.
+     * 대사 글자별 등장.
      */
     const dialogues = $$('.dialogue');
 
@@ -308,23 +323,281 @@
       }
 
       if (name) name.textContent = chapterLabels[index];
-
-      $$('[data-jump]').forEach((button, buttonIndex) => {
-        if (buttonIndex === Math.min(3, index)) {
-          button.setAttribute('aria-current', 'step');
-        } else {
-          button.removeAttribute('aria-current');
-        }
-      });
     }
 
+    /*
+     * 거절 버튼의 위치와 속도.
+     */
+    const repel = {
+      x: 0,
+      y: 0,
+      vx: 0,
+      vy: 0,
+      pointer: null
+    };
+
+    const REPULSION_RADIUS = 165;
+    const MAX_SPEED = 440;
+
+    function prepareRefuse() {
+      const invitation = $('#invitation');
+
+      if (!refuse || !invitation) return false;
+
+      if (!refuse.classList.contains('has-moved')) {
+        const buttonRect = refuse.getBoundingClientRect();
+        const sceneRect = invitation.getBoundingClientRect();
+
+        repel.x = buttonRect.left - sceneRect.left;
+        repel.y = buttonRect.top - sceneRect.top;
+        repel.vx = 0;
+        repel.vy = 0;
+
+        invitation.append(refuse);
+        refuse.classList.add('has-moved');
+
+        refuse.style.left = `${repel.x}px`;
+        refuse.style.top = `${repel.y}px`;
+      }
+
+      return true;
+    }
+
+    function restoreRefuse() {
+      if (!refuse || !choices) return;
+
+      const note = $('#dodge-note');
+
+      if (note && note.parentElement === choices) {
+        choices.insertBefore(refuse, note);
+      } else {
+        choices.append(refuse);
+      }
+
+      refuse.hidden = false;
+      refuse.classList.remove('has-moved');
+      refuse.style.left = '';
+      refuse.style.top = '';
+
+      repel.vx = 0;
+      repel.vy = 0;
+      repel.pointer = null;
+    }
+
+    function updateRefuse(dt) {
+      const current = scrollTop() / vh;
+
+      const enabled = refuse &&
+        !refuse.hidden &&
+        !accepted &&
+        current >= 8.15 &&
+        current <= 9.2;
+
+      if (!enabled) {
+        repel.vx = 0;
+        repel.vy = 0;
+        return;
+      }
+
+      if (!prepareRefuse()) return;
+
+      const invitation = $('#invitation');
+      const sceneRect = invitation.getBoundingClientRect();
+
+      const width = refuse.offsetWidth;
+      const height = refuse.offsetHeight;
+      const centerX = repel.x + width / 2;
+      const centerY = repel.y + height / 2;
+
+      let accelerationX = 0;
+      let accelerationY = 0;
+
+      if (repel.pointer) {
+        const pointerX = repel.pointer.x - sceneRect.left;
+        const pointerY = repel.pointer.y - sceneRect.top;
+
+        let dx = centerX - pointerX;
+        let dy = centerY - pointerY;
+        let distance = Math.hypot(dx, dy);
+
+        if (distance < 1) {
+          dx = 1;
+          dy = -0.5;
+          distance = Math.hypot(dx, dy);
+        }
+
+        if (distance < REPULSION_RADIUS) {
+          const proximity = 1 - distance / REPULSION_RADIUS;
+          const force = 2600 * proximity * proximity;
+
+          accelerationX += dx / distance * force;
+          accelerationY += dy / distance * force;
+        }
+      }
+
+      /*
+       * 수락 버튼과 대사에 가까워지면 반대 방향으로 밀어냅니다.
+       */
+      const obstacles = [
+        { element: accept, padding: 30 },
+        { element: $('.invitation-copy'), padding: 18 },
+        { element: $('.masthead'), padding: 12 }
+      ];
+
+      obstacles.forEach(({ element, padding }) => {
+        if (!element) return;
+
+        const rect = element.getBoundingClientRect();
+
+        const left =
+          rect.left - sceneRect.left - width / 2 - padding;
+        const right =
+          rect.right - sceneRect.left + width / 2 + padding;
+        const top =
+          rect.top - sceneRect.top - height / 2 - padding;
+        const bottom =
+          rect.bottom - sceneRect.top + height / 2 + padding;
+
+        if (
+          centerX <= left || centerX >= right ||
+          centerY <= top || centerY >= bottom
+        ) {
+          return;
+        }
+
+        const exits = [
+          { distance: centerX - left, x: -1, y: 0 },
+          { distance: right - centerX, x: 1, y: 0 },
+          { distance: centerY - top, x: 0, y: -1 },
+          { distance: bottom - centerY, x: 0, y: 1 }
+        ];
+
+        exits.sort((a, b) => a.distance - b.distance);
+
+        const exit = exits[0];
+        const force = 3500 + exit.distance * 35;
+
+        accelerationX += exit.x * force;
+        accelerationY += exit.y * force;
+      });
+
+      repel.vx += accelerationX * dt;
+      repel.vy += accelerationY * dt;
+
+      const friction = Math.exp(-5 * dt);
+      repel.vx *= friction;
+      repel.vy *= friction;
+
+      const speed = Math.hypot(repel.vx, repel.vy);
+
+      if (speed > MAX_SPEED) {
+        repel.vx *= MAX_SPEED / speed;
+        repel.vy *= MAX_SPEED / speed;
+      }
+
+      repel.x += repel.vx * dt;
+      repel.y += repel.vy * dt;
+
+      const minX = 16;
+      const maxX = Math.max(
+        minX,
+        stage.clientWidth - width - 16
+      );
+
+      const minY = Math.min(
+        75,
+        Math.max(8, stage.clientHeight - height - 16)
+      );
+
+      const maxY = Math.max(
+        minY,
+        stage.clientHeight - height - 85
+      );
+
+      if (repel.x < minX) {
+        repel.x = minX;
+        repel.vx = Math.abs(repel.vx) * 0.25;
+      } else if (repel.x > maxX) {
+        repel.x = maxX;
+        repel.vx = -Math.abs(repel.vx) * 0.25;
+      }
+
+      if (repel.y < minY) {
+        repel.y = minY;
+        repel.vy = Math.abs(repel.vy) * 0.25;
+      } else if (repel.y > maxY) {
+        repel.y = maxY;
+        repel.vy = -Math.abs(repel.vy) * 0.25;
+      }
+
+      refuse.style.left = `${repel.x.toFixed(2)}px`;
+      refuse.style.top = `${repel.y.toFixed(2)}px`;
+    }
+
+    stage.addEventListener('pointermove', event => {
+      if (event.pointerType === 'touch') return;
+
+      repel.pointer = {
+        x: event.clientX,
+        y: event.clientY,
+        touch: false
+      };
+    });
+
+    stage.addEventListener('pointerleave', () => {
+      repel.pointer = null;
+    });
+
+    refuse?.addEventListener('pointerdown', event => {
+      event.preventDefault();
+
+      if (!prepareRefuse()) return;
+
+      repel.pointer = {
+        x: event.clientX,
+        y: event.clientY,
+        touch: event.pointerType === 'touch'
+      };
+
+      /*
+       * タッチ時は指を離しても少しだけ力を残します。
+       */
+      if (event.pointerType === 'touch') {
+        const pointer = repel.pointer;
+
+        setTimeout(() => {
+          if (repel.pointer === pointer) {
+            repel.pointer = null;
+          }
+        }, 300);
+      }
+    });
+
+    refuse?.addEventListener('click', event => {
+      event.preventDefault();
+    });
+
+    document.addEventListener('pointercancel', () => {
+      repel.pointer = null;
+    });
+
+    /*
+     * スクロール位置に合わせて各場面を描画します。
+     */
+    let previousTime = 0;
+
     function render(now) {
-      position = Math.min(
+      const dt = Math.min(
+        0.033,
+        Math.max(0.001, (now - (previousTime || now)) / 1000)
+      );
+
+      previousTime = now;
+
+      const s = Math.min(
         storyLength,
         Math.max(0, scrollTop() / vh)
       );
-
-      const s = position;
 
       const introFade = 1 - seg(s, 0.85, 1.25);
       const mapFade =
@@ -355,10 +628,6 @@
         const width = mapWorld.clientWidth;
         const height = mapWorld.clientHeight;
 
-        /*
-         * 목적지를 향해 이동하며 확대합니다.
-         * 회전은 적용하지 않습니다.
-         */
         mapWorld.style.transform = reduced
           ? 'none'
           : `translate(${width * 0.115 * z}px,
@@ -383,7 +652,6 @@
 
       const arrival =
         seg(s, 3.65, 4.1) * (1 - seg(s, 4.45, 4.8));
-
       const night =
         seg(s, 5, 5.2) * (1 - seg(s, 6.4, 6.8));
 
@@ -438,6 +706,16 @@
         choices.setAttribute('aria-hidden', String(!choiceReady));
       }
 
+      /*
+       * 거절 버튼이 choices 밖으로 이동한 후에도
+       * 동일한 등장 시점과 클릭 가능 상태를 적용합니다.
+       */
+      if (refuse?.classList.contains('has-moved')) {
+        refuse.style.opacity = seg(s, 8.05, 8.45);
+        refuse.inert = !choiceReady;
+        refuse.style.pointerEvents = choiceReady ? 'auto' : 'none';
+      }
+
       opacity('.invitation-question', seg(s, 7.95, 8.25));
 
       visibility($('#accepted'), acceptedFade);
@@ -476,6 +754,7 @@
               : '다음 이야기로 ↓';
       }
 
+      updateRefuse(dt);
       requestAnimationFrame(render);
     }
 
@@ -512,26 +791,10 @@
       });
     });
 
-    function restoreRefuse() {
-      if (!refuse || !choices) return;
-
-      const note = $('#dodge-note');
-
-      if (note && note.parentElement === choices) {
-        choices.insertBefore(refuse, note);
-      } else {
-        choices.append(refuse);
-      }
-
-      refuse.hidden = false;
-      refuse.classList.remove('has-moved');
-      refuse.style.left = '';
-      refuse.style.top = '';
-    }
-
     function reset() {
       accepted = false;
       storyLength = 9.6;
+
       if (missions) missions.hidden = true;
 
       restoreRefuse();
@@ -541,7 +804,6 @@
 
       dialogues.forEach(element => typingStarts.delete(element));
 
-      dodgeCount = 0;
       currentChapter = -1;
       introStart = performance.now();
 
@@ -570,6 +832,8 @@
 
       if (refuse) refuse.hidden = true;
 
+      repel.pointer = null;
+
       measure();
       jump(10.1);
     });
@@ -587,148 +851,8 @@
 
     $('#open-missions')?.addEventListener('click', openMissions);
 
-    function dodge(event) {
-      if (!refuse || !accept || accepted) return;
-
-      const current = scrollTop() / vh;
-
-      if (
-        current < 8.1 ||
-        current > 9.2 ||
-        performance.now() - lastDodge < 380
-      ) {
-        return;
-      }
-
-      if (event?.cancelable) event.preventDefault();
-
-      lastDodge = performance.now();
-      dodgeCount++;
-
-      const stageRect = stage.getBoundingClientRect();
-      const acceptRect = accept.getBoundingClientRect();
-      const copyRect = $('.invitation-copy')?.getBoundingClientRect();
-
-      const width = stage.clientWidth;
-      const height = stage.clientHeight;
-      const buttonWidth = refuse.offsetWidth;
-      const buttonHeight = refuse.offsetHeight;
-
-      const pointerX =
-        Number.isFinite(event?.clientX)
-          ? event.clientX - stageRect.left
-          : width / 2;
-
-      const pointerY =
-        Number.isFinite(event?.clientY)
-          ? event.clientY - stageRect.top
-          : height * 0.75;
-
-      const candidates = [
-        [0.1, 0.2], [0.66, 0.21],
-        [0.06, 0.63], [0.65, 0.63],
-        [0.08, 0.82], [0.66, 0.83],
-        [0.1, 0.12], [0.64, 0.12]
-      ];
-
-      let best = null;
-      let bestScore = -Infinity;
-
-      candidates.forEach(([fractionX, fractionY]) => {
-        const x = Math.max(
-          16,
-          Math.min(width - buttonWidth - 16, fractionX * width)
-        );
-
-        const y = Math.max(
-          80,
-          Math.min(height - buttonHeight - 86, fractionY * height)
-        );
-
-        const rect = {
-          left: x + stageRect.left,
-          right: x + stageRect.left + buttonWidth,
-          top: y + stageRect.top,
-          bottom: y + stageRect.top + buttonHeight
-        };
-
-        const overlaps = other => other &&
-          rect.left < other.right + 14 &&
-          rect.right > other.left - 14 &&
-          rect.top < other.bottom + 14 &&
-          rect.bottom > other.top - 14;
-
-        if (overlaps(acceptRect) || overlaps(copyRect)) return;
-
-        const score = Math.hypot(
-          x + buttonWidth / 2 - pointerX,
-          y + buttonHeight / 2 - pointerY
-        );
-
-        if (score > bestScore) {
-          bestScore = score;
-          best = { x, y };
-        }
-      });
-
-      if (!best) return;
-
-      if (!refuse.classList.contains('has-moved')) {
-        const oldRect = refuse.getBoundingClientRect();
-
-        $('#invitation').append(refuse);
-        refuse.classList.add('has-moved');
-
-        refuse.style.left = `${oldRect.left - stageRect.left}px`;
-        refuse.style.top = `${oldRect.top - stageRect.top}px`;
-
-        void refuse.offsetWidth;
-      }
-
-      refuse.style.left = `${best.x}px`;
-      refuse.style.top = `${best.y}px`;
-
-      const message = $('#dodge-message');
-
-      if (message) {
-        message.textContent = dodgeCount > 2
-          ? '허허, 이번 여행이 꽤 궁금한 모양이군.'
-          : '아직 작별 인사를 하고 싶지 않은 모양이야.';
-      }
-    }
-
-    stage.addEventListener('pointermove', event => {
-      if (
-        event.pointerType === 'touch' ||
-        accepted ||
-        !refuse ||
-        scrollTop() / vh < 8.15
-      ) {
-        return;
-      }
-
-      const rect = refuse.getBoundingClientRect();
-
-      if (
-        event.clientX > rect.left - 48 &&
-        event.clientX < rect.right + 48 &&
-        event.clientY > rect.top - 35 &&
-        event.clientY < rect.bottom + 35
-      ) {
-        dodge(event);
-      }
-    });
-
-    refuse?.addEventListener('pointerdown', dodge);
-
-    refuse?.addEventListener('click', event => {
-      event.preventDefault();
-      dodge(event);
-    });
-
     /*
-     * 고정된 장면 위에서도 휠 입력을 문서 스크롤로 전달합니다.
-     * Ctrl/Command를 이용한 확대 동작은 가로채지 않습니다.
+     * 고정된 장면 위의 휠 입력을 문서 스크롤에 연결합니다.
      */
     stage.addEventListener('wheel', event => {
       if (event.ctrlKey || event.metaKey) return;
@@ -745,7 +869,7 @@
     }, { passive: false });
 
     /*
-     * 모바일에서는 한 손가락의 세로 이동을 스크롤에 연결합니다.
+     * 모바일 한 손가락 세로 스크롤.
      */
     stage.addEventListener('touchstart', event => {
       if (event.touches.length !== 1) {
@@ -773,7 +897,7 @@
 
       if (Math.abs(deltaX) > Math.abs(deltaY)) return;
 
-      event.preventDefault();
+      if (event.cancelable) event.preventDefault();
       changeScroll(deltaY);
     }, { passive: false });
 
@@ -786,7 +910,7 @@
     });
 
     /*
-     * 키보드로도 다음 장면으로 진행할 수 있습니다.
+     * 키보드 스크롤.
      */
     document.addEventListener('keydown', event => {
       const tag = event.target?.tagName;
@@ -825,6 +949,10 @@
       resizeTimer = setTimeout(() => {
         const oldPosition = scrollTop() / vh;
         const wasInsideStory = oldPosition <= storyLength;
+
+        restoreRefuse();
+
+        if (accepted && refuse) refuse.hidden = true;
 
         measure();
 
