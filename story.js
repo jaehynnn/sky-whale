@@ -13,7 +13,7 @@
       return;
     }
 
-    const reduced = window.matchMedia(
+    const reduced = matchMedia(
       '(prefers-reduced-motion: reduce)'
     ).matches;
 
@@ -45,67 +45,65 @@
 
     const typingStarts = new WeakMap();
 
-    /*
-     * 기존 CSS를 유지하면서 필요한 설정만 보정합니다.
-     */
+    /* 기존 CSS 유지 + 필요한 보정과 새 장면 스타일 */
     const repairStyle = document.createElement('style');
 
     repairStyle.textContent = `
       html {
-        height: auto !important;
-        min-height: 100% !important;
-        overflow-x: hidden !important;
-        overflow-y: auto !important;
-        scroll-behavior: auto !important;
+        height:auto !important;
+        min-height:100% !important;
+        overflow-x:hidden !important;
+        overflow-y:auto !important;
+        scroll-behavior:auto !important;
       }
 
       body {
-        position: static !important;
-        height: auto !important;
-        min-height: 100% !important;
-        overflow: visible !important;
+        position:static !important;
+        height:auto !important;
+        min-height:100% !important;
+        overflow:visible !important;
       }
 
       #story {
-        position: relative !important;
-        overflow: visible !important;
+        position:relative !important;
+        overflow:visible !important;
       }
 
       #stage {
-        position: sticky !important;
-        top: 0 !important;
-        width: 100% !important;
-        overflow: hidden !important;
-        touch-action: pan-x pinch-zoom;
+        position:sticky !important;
+        top:0 !important;
+        width:100% !important;
+        overflow:hidden !important;
+        touch-action:pan-x pinch-zoom;
       }
 
       #stage .scene {
-        pointer-events: none !important;
+        pointer-events:none !important;
       }
 
       #stage .scene.is-active button {
-        pointer-events: auto !important;
+        pointer-events:auto !important;
       }
 
       #stage .sky,
       #stage #intro-art,
       #stage .progress {
-        pointer-events: none !important;
+        pointer-events:none !important;
       }
 
       #stage .story-footer {
-        position: absolute !important;
-        z-index: 100 !important;
-        pointer-events: none !important;
+        position:absolute !important;
+        z-index:100 !important;
+        pointer-events:none !important;
       }
 
       #stage .story-footer button {
-        pointer-events: auto !important;
+        pointer-events:auto !important;
       }
 
       #continue {
-        cursor: pointer;
-        min-height: 44px;
+        cursor:pointer;
+        min-height:44px;
       }
 
       .masthead #brand,
@@ -113,25 +111,26 @@
       #stage .story-footer .pagination,
       #dodge-message,
       #dodge-note,
-      #intro-art {
-        display: none !important;
+      #intro-art,
+      .compass {
+        display:none !important;
       }
 
       .masthead {
-        justify-content: flex-end !important;
+        justify-content:flex-end !important;
       }
 
       #choices {
-        z-index: 110 !important;
+        z-index:110 !important;
       }
 
       #refuse.has-moved {
-        position: absolute !important;
-        z-index: 120 !important;
-        margin: 0 !important;
-        transform: none !important;
-        transition: none !important;
-        will-change: left, top;
+        position:absolute !important;
+        z-index:120 !important;
+        margin:0 !important;
+        transform:none !important;
+        transition:none !important;
+        will-change:left,top;
       }
 
       #intro .eyebrow,
@@ -141,111 +140,106 @@
       #accepted .eyebrow,
       .mission-heading .eyebrow,
       .marker-label {
-        display: none !important;
+        display:none !important;
       }
 
-      .accepted-copy > p:not(.eyebrow):not(.dialogue) {
-        display: none !important;
+      .accepted-copy > p:not(.eyebrow):not(.dialogue),
+      #missions .mission-end > p {
+        display:none !important;
       }
 
       #intro {
         background:
-          linear-gradient(
-            rgba(0, 0, 0, .30),
-            rgba(0, 0, 0, .30)
-          ),
+          linear-gradient(#0000004d,#0000004d),
           url("assets/night-whales.png")
-          center / cover no-repeat;
+          center/cover no-repeat;
       }
 
       #stage > .sky {
         background:
-          linear-gradient(
-            rgba(0, 0, 0, .30),
-            rgba(0, 0, 0, .30)
-          ),
+          linear-gradient(#0000004d,#0000004d),
           url("assets/night-clean.png")
-          center / cover no-repeat;
+          center/cover no-repeat;
       }
 
       #stage > .sky .moon,
       #stage > .sky .mist,
       #stage > .sky .aurora {
-        display: none !important;
+        display:none !important;
       }
 
       #map-scene,
       #invitation,
       #accepted {
-        background: transparent !important;
+        background:transparent !important;
+      }
+
+      .map-position {
+        width:min(84svh,720px) !important;
       }
 
       #map-world > img {
-        background: transparent;
-        mask-image: none !important;
-        -webkit-mask-image: none !important;
-        filter: drop-shadow(0 0 3px #76d8cc35);
+        background:transparent;
+        mask-image:none !important;
+        -webkit-mask-image:none !important;
+        filter:drop-shadow(0 0 3px #76d8cc35);
       }
 
       .marker-dot {
-        background: #c5fff4;
-        box-shadow: 0 0 12px #8be9da;
+        background:#c5fff4;
+        box-shadow:0 0 12px #8be9da;
       }
 
       .marker-ring {
-        border-color: #a3f0df99;
+        border-color:#a3f0df99;
       }
 
       .dialogue {
-        font-style: italic !important;
-        color: #fff;
+        font-style:italic !important;
+        color:#fff;
         text-shadow:
           0 2px 8px #000b,
           0 0 24px #030817cc;
       }
 
       .dialogue .word {
-        padding-right: .08em;
-        margin-right: -.08em;
+        padding-right:.08em;
+        margin-right:-.08em;
       }
 
       .invitation-question.dialogue {
-        margin-top: 20px;
-        font-size: clamp(20px, 2vw, 27px);
+        margin-top:20px;
+        font-size:clamp(20px,2vw,27px);
       }
 
       #missions {
         background:
-          linear-gradient(
-            rgba(0, 0, 0, .30),
-            rgba(0, 0, 0, .30)
-          ),
+          linear-gradient(#0000004d,#0000004d),
           url("assets/night-clean.png")
-          center / cover no-repeat;
+          center/cover no-repeat;
       }
 
       .mission-grid > details,
       .mission-card {
-        border-color: #e6d1a386;
-        animation:
-          skywhale-mission-glow 5s ease-in-out infinite;
+        border-color:#e6d1a386;
+        animation:skywhale-mission-glow 5s ease-in-out infinite;
       }
 
       .mission-grid > details:nth-child(2) {
-        animation-delay: -1.2s;
+        animation-delay:-1.2s;
       }
 
       .mission-grid > details:nth-child(3) {
-        animation-delay: -2.4s;
+        animation-delay:-2.4s;
       }
 
       .mission-grid > details:nth-child(4) {
-        animation-delay: -3.6s;
+        animation-delay:-3.6s;
       }
 
       @keyframes skywhale-mission-glow {
-        0%, 100% {
-          border-color: #e6d1a370;
+        0%,100% {
+          border-color:#e6d1a370;
           box-shadow:
             inset 0 0 0 5px #0c14254d,
             0 0 9px #d7c3ff12,
@@ -254,7 +248,7 @@
         }
 
         50% {
-          border-color: #f0dab29e;
+          border-color:#f0dab29e;
           box-shadow:
             inset 0 0 0 5px #0c14254d,
             0 0 12px #e3d1ff26,
@@ -263,24 +257,172 @@
         }
       }
 
-      [hidden] {
-        display: none !important;
+      /* 구체가 모이는 장면과 마지막 탑승 장면 */
+      #memory-ending {
+        position:relative;
+        background:#081725;
       }
 
-      @media (prefers-reduced-motion: reduce) {
+      .memory-stage {
+        position:sticky;
+        top:0;
+        height:100svh;
+        overflow:hidden;
+        isolation:isolate;
+      }
+
+      .memory-night,
+      .memory-final-image {
+        position:absolute;
+        inset:0;
+        pointer-events:none;
+      }
+
+      .memory-night {
+        z-index:0;
+        background:
+          linear-gradient(#0000004d,#0000004d),
+          url("assets/night-clean.png")
+          center/cover no-repeat;
+      }
+
+      .memory-final-image {
+        z-index:1;
+        opacity:0;
+        background:
+          linear-gradient(#0000004d,#0000004d),
+          url("assets/finale-riders.png")
+          center/cover no-repeat;
+      }
+
+      .memory-bundle {
+        position:absolute;
+        z-index:3;
+        left:50%;
+        top:50%;
+        width:clamp(150px,24vw,280px);
+        aspect-ratio:1;
+        transform:translate(-50%,-50%);
+        background:
+          url("assets/parcel-fantasy.png")
+          center/contain no-repeat;
+        pointer-events:none;
+      }
+
+      .memory-bundle::before {
+        content:"";
+        position:absolute;
+        inset:-30% -40%;
+        background:
+          url("assets/parcel-light.png")
+          center/contain no-repeat;
+        animation:memory-light-float 8s ease-in-out infinite;
+      }
+
+      .memory-orbs {
+        position:absolute;
+        z-index:4;
+        inset:0;
+        pointer-events:none;
+      }
+
+      .memory-orb {
+        position:absolute;
+        left:50%;
+        top:50%;
+        width:clamp(85px,13vw,150px);
+        height:auto;
+        opacity:0;
+        filter:drop-shadow(0 0 12px #ffe28d80);
+        will-change:transform,opacity;
+      }
+
+      .memory-flash {
+        position:absolute;
+        z-index:8;
+        left:50%;
+        top:50%;
+        width:0;
+        height:0;
+        border-radius:50%;
+        transform:translate(-50%,-50%);
+        background:#fff;
+        box-shadow:
+          0 0 60px 20px #fff8d9,
+          0 0 100px 35px #ffe7a5a0;
+        opacity:0;
+        pointer-events:none;
+      }
+
+      .memory-caption.dialogue {
+        position:absolute;
+        z-index:10;
+        inset:0;
+        display:grid;
+        place-items:center;
+        margin:0;
+        padding:8%;
+        opacity:0;
+        text-align:center;
+        font-family:var(--serif);
+        font-size:clamp(25px,3.2vw,42px);
+        font-weight:400;
+        font-style:italic;
+        line-height:1.9;
+        color:#fff;
+        text-shadow:
+          0 2px 10px #000b,
+          0 0 28px #23162ec0;
+        pointer-events:none;
+      }
+
+      @keyframes memory-light-float {
+        0%,100% {
+          transform:translateY(5px) rotate(-7deg);
+          opacity:.7;
+        }
+
+        50% {
+          transform:translateY(-7px) rotate(7deg);
+          opacity:1;
+        }
+      }
+
+      [hidden] {
+        display:none !important;
+      }
+
+      @media(max-width:760px) {
+        .map-position {
+          width:min(110.4vw,78svh) !important;
+        }
+
+        .memory-bundle {
+          width:min(45vw,220px);
+        }
+
+        .memory-orb {
+          width:95px;
+        }
+
+        .memory-final-image {
+          background-color:#312838;
+          background-size:100% 100%,100% auto;
+        }
+      }
+
+      @media(prefers-reduced-motion:reduce) {
         .mission-grid > details,
-        .mission-card {
-          animation: none !important;
+        .mission-card,
+        .memory-bundle::before {
+          animation:none !important;
         }
       }
     `;
 
     document.head.append(repairStyle);
 
-    /*
-     * 실제 스크롤과 이야기 진행 위치를 분리합니다.
-     * 고래 접근 구간에만 추가 스크롤 거리를 배정합니다.
-     */
+    /* 실제 스크롤 위치와 이야기 진행 위치 */
     function rawScrollTop() {
       return window.scrollY ||
         document.scrollingElement?.scrollTop ||
@@ -288,9 +430,7 @@
     }
 
     function toStory(pagePosition) {
-      if (pagePosition <= 6.3) {
-        return pagePosition;
-      }
+      if (pagePosition <= 6.3) return pagePosition;
 
       if (pagePosition <= 7.8) {
         return 6.3 + (pagePosition - 6.3) / 5;
@@ -300,9 +440,7 @@
     }
 
     function toPage(storyPosition) {
-      if (storyPosition <= 6.3) {
-        return storyPosition;
-      }
+      if (storyPosition <= 6.3) return storyPosition;
 
       if (storyPosition <= 6.6) {
         return 6.3 + (storyPosition - 6.3) * 5;
@@ -318,7 +456,7 @@
     function measure() {
       vh = Math.max(
         1,
-        document.documentElement.clientHeight || window.innerHeight
+        document.documentElement.clientHeight || innerHeight
       );
 
       stage.style.setProperty('height', `${vh}px`, 'important');
@@ -333,13 +471,14 @@
     function goToPixels(top, animate = true) {
       const maximum = Math.max(
         0,
-        document.documentElement.scrollHeight - window.innerHeight
+        document.documentElement.scrollHeight - innerHeight
       );
 
-      const destination = toPage(top / vh) * vh;
-
       window.scrollTo({
-        top: Math.max(0, Math.min(maximum, destination)),
+        top: Math.max(
+          0,
+          Math.min(maximum, toPage(top / vh) * vh)
+        ),
         left: 0,
         behavior: animate && !reduced ? 'smooth' : 'auto'
       });
@@ -352,16 +491,82 @@
     function changeScroll(delta) {
       if (!Number.isFinite(delta)) return;
 
-      const nextPagePosition =
+      const nextPosition =
         Math.max(0, rawScrollTop() + delta) / vh;
 
-      goToPixels(toStory(nextPagePosition) * vh, false);
+      goToPixels(toStory(nextPosition) * vh, false);
     }
 
-    /*
-     * 나레이션을 요소별로 연결합니다.
-     * HTML에서 추가 나레이션이 생겨도 순서가 꼬이지 않게 합니다.
-     */
+    /* 새로운 마지막 장면 생성 */
+    const ending = document.createElement('section');
+    ending.id = 'memory-ending';
+    ending.hidden = true;
+
+    ending.setAttribute(
+      'aria-label',
+      '추억이 모여 열리는 하늘길'
+    );
+
+    ending.innerHTML = `
+      <div class="memory-stage">
+        <div class="memory-night" aria-hidden="true"></div>
+        <div class="memory-final-image" aria-hidden="true"></div>
+        <div class="memory-bundle" aria-hidden="true"></div>
+        <div class="memory-orbs" aria-hidden="true"></div>
+        <div class="memory-flash" aria-hidden="true"></div>
+
+        <p
+          class="memory-caption dialogue"
+          data-text="우리의 이야기는 이제 시작이라네"
+          aria-hidden="true"
+        ></p>
+      </div>
+    `;
+
+    if (missions) missions.after(ending);
+
+    const endingStage = ending.querySelector('.memory-stage');
+    const endingBundle = ending.querySelector('.memory-bundle');
+    const endingFlash = ending.querySelector('.memory-flash');
+    const endingImage = ending.querySelector('.memory-final-image');
+
+    const endingOrbs = Array.from({ length: 6 }, () => {
+      const image = document.createElement('img');
+
+      image.src = 'assets/memory-orb.png';
+      image.alt = '';
+      image.className = 'memory-orb';
+
+      ending.querySelector('.memory-orbs').append(image);
+
+      return image;
+    });
+
+    /* 요청한 문구 변경 */
+    [
+      [
+        '.map-heading h2',
+        '좀 더 자세히 살펴보자고'
+      ],
+      [
+        '#accepted .dialogue',
+        '하하, 그럴 줄 알았어\n자, 함께 추억을 만들어 보게!'
+      ],
+      [
+        '#mission-title',
+        '우리의 추억이,\n한 곳으로 모이는 순간'
+      ]
+    ].forEach(([selector, text]) => {
+      const element = $(selector);
+      if (element) element.dataset.text = text;
+    });
+
+    const missionOpenButton = $('#open-missions');
+
+    if (missionOpenButton) {
+      missionOpenButton.textContent = '미션 펼쳐보기';
+    }
+
     const narration = {
       intro: $('#intro .dialogue'),
       arrival: $('#arrival-caption .dialogue'),
@@ -370,7 +575,8 @@
       accepted: $('#accepted .dialogue'),
       map: $('.map-heading h2'),
       mission: $('#mission-title'),
-      question: $('.invitation-question')
+      question: $('.invitation-question'),
+      finale: ending.querySelector('.memory-caption')
     };
 
     const dialogues = [
@@ -380,6 +586,7 @@
       ].filter(Boolean))
     ];
 
+    /* 모든 나레이션을 동일한 글자별 구조로 구성 */
     dialogues.forEach(element => {
       let content = element.dataset.text;
 
@@ -434,7 +641,7 @@
     let missionTitleVisible = false;
 
     if (narration.mission) {
-      const missionObserver = new IntersectionObserver(entries => {
+      const observer = new IntersectionObserver(entries => {
         missionTitleVisible = entries[0].isIntersecting;
 
         if (!missionTitleVisible) {
@@ -444,12 +651,10 @@
         threshold: 0.15
       });
 
-      missionObserver.observe(narration.mission);
+      observer.observe(narration.mission);
     }
 
-    /*
-     * 별빛 효과.
-     */
+    /* 기존 별빛 효과 */
     const stars = $('#stars');
 
     if (stars) {
@@ -471,6 +676,7 @@
       }
     }
 
+    /* 첫 화면과 동일한 글자 등장 모션 */
     function reveal(element, progress) {
       if (!element?._chars) return;
 
@@ -494,10 +700,12 @@
         typingStarts.set(element, now);
       }
 
-      const duration = element._chars.length * 34 + 350;
-      const automatic = (now - typingStarts.get(element)) / duration;
+      const duration = element._chars.length * 36 + 500;
 
-      reveal(element, Math.max(progress, automatic));
+      reveal(
+        element,
+        (now - typingStarts.get(element)) / duration
+      );
     }
 
     function visibility(element, value) {
@@ -515,10 +723,7 @@
 
     function opacity(selector, value) {
       const element = $(selector);
-
-      if (element) {
-        element.style.opacity = clamp(value);
-      }
+      if (element) element.style.opacity = clamp(value);
     }
 
     const chapterLabels = [
@@ -531,7 +736,6 @@
 
     function setChapter(index) {
       if (currentChapter === index) return;
-
       currentChapter = index;
 
       const number = $('#chapter-number');
@@ -541,16 +745,10 @@
         number.textContent = String(index + 1).padStart(2, '0');
       }
 
-      if (name) {
-        name.textContent = chapterLabels[index];
-      }
+      if (name) name.textContent = chapterLabels[index];
     }
 
-    /*
-     * 거절 버튼:
-     * 커서를 움직일 때 반발하고,
-     * 가장자리에서는 안쪽 대각선으로 튕깁니다.
-     */
+    /* 거절 버튼 */
     const repel = {
       x: 0,
       y: 0,
@@ -633,10 +831,6 @@
         current >= 8.15 &&
         current <= 9.2;
 
-      /*
-       * 커서 정지 처리는 프레임 갱신에서 검사합니다.
-       * 터치 시작 처리를 막지 않습니다.
-       */
       if (!enabled || !repel.pointer) {
         repel.vx = 0;
         repel.vy = 0;
@@ -645,8 +839,8 @@
 
       if (!prepareRefuse()) return;
 
-      const invitation = $('#invitation');
-      const sceneRect = invitation.getBoundingClientRect();
+      const sceneRect =
+        $('#invitation').getBoundingClientRect();
 
       const width = refuse.offsetWidth;
       const height = refuse.offsetHeight;
@@ -827,8 +1021,8 @@
     document.addEventListener('pointercancel', stopRefuse);
 
     /*
-     * 기존 Canvas 이미지 변형 효과 유지.
-     * 실제 지느러미를 분리한 애니메이션은 아닙니다.
+     * 기존 고래 Canvas 변형 유지.
+     * 지느러미를 별도 분리한 애니메이션은 아닙니다.
      */
     const swimSource = $('#whale-flight img');
     const swimCanvas = document.createElement('canvas');
@@ -837,12 +1031,12 @@
     swimCanvas.setAttribute('aria-hidden', 'true');
 
     swimCanvas.style.cssText = `
-      position: absolute;
-      left: 0;
-      top: -12%;
-      width: 100%;
-      height: 124%;
-      pointer-events: none;
+      position:absolute;
+      left:0;
+      top:-12%;
+      width:100%;
+      height:124%;
+      pointer-events:none;
     `;
 
     if (swimSource && swimContext) {
@@ -861,8 +1055,8 @@
 
       const sourceWidth = swimSource.naturalWidth;
       const sourceHeight = swimSource.naturalHeight;
-
       const width = Math.min(sourceWidth, 1400);
+
       const height = Math.round(
         width * sourceHeight / sourceWidth
       );
@@ -878,10 +1072,7 @@
       }
 
       swimContext.clearRect(
-        0,
-        0,
-        swimCanvas.width,
-        swimCanvas.height
+        0, 0, swimCanvas.width, swimCanvas.height
       );
 
       const phase = now / 1000 * Math.PI * 2 / 3.6;
@@ -926,9 +1117,115 @@
       swimSource.style.visibility = 'hidden';
     }
 
-    /*
-     * 장면 렌더링.
-     */
+    /* 마지막 장면의 스크롤 길이 */
+    function measureEnding() {
+      if (ending.hidden) return;
+
+      ending.style.height =
+        `${Math.max(1, endingStage.clientHeight) * 6}px`;
+    }
+
+    function renderEnding(now) {
+      if (ending.hidden) return;
+
+      const width = endingStage.clientWidth;
+      const height = endingStage.clientHeight;
+
+      const p = clamp(
+        -ending.getBoundingClientRect().top /
+        Math.max(1, ending.offsetHeight - height)
+      );
+
+      const radiusX = Math.min(width * 0.34, 360);
+      const radiusY = Math.min(height * 0.29, 240);
+      const born = seg(p, 0.04, 0.15);
+
+      /*
+       * 1. 구체 등장
+       * 2. 구체 6개가 보따리 중앙까지 모두 이동
+       */
+      endingOrbs.forEach((orb, index) => {
+        const gathered = seg(
+          p,
+          0.20 + index * 0.025,
+          0.44 + index * 0.015
+        );
+
+        const angle =
+          -Math.PI / 2 + index * Math.PI / 3;
+
+        const float = reduced
+          ? 0
+          : Math.sin(now / 1000 * 1.5 + index) *
+            8 * (1 - gathered);
+
+        const x =
+          Math.cos(angle) * radiusX * (1 - gathered);
+
+        const y =
+          Math.sin(angle) * radiusY * (1 - gathered) +
+          float;
+
+        orb.style.opacity =
+          born * (1 - seg(gathered, 0.94, 1));
+
+        orb.style.transform = `
+          translate(
+            calc(-50% + ${x}px),
+            calc(-50% + ${y}px)
+          )
+          scale(${1 - gathered * 0.65})
+        `;
+      });
+
+      endingBundle.style.opacity =
+        1 - seg(p, 0.60, 0.64);
+
+      const glow = 12 + seg(p, 0.35, 0.54) * 42;
+
+      endingBundle.style.filter =
+        `drop-shadow(0 0 ${glow}px #ffe6a0)`;
+
+      /*
+       * 마지막 구체 도착: p = 0.515
+       * 빛 확산 시작:      p = 0.54
+       * 화면 전체 덮임:   p = 0.62
+       * 배경 전환:        p = 0.64 ~ 0.66
+       * 흰빛 걷힘:        p = 0.72 ~ 0.82
+       */
+      const expansion = seg(p, 0.54, 0.62);
+
+      const diameter =
+        Math.hypot(width, height) * 1.15 * expansion;
+
+      endingFlash.style.width = `${diameter}px`;
+      endingFlash.style.height = `${diameter}px`;
+
+      endingFlash.style.opacity =
+        seg(p, 0.54, 0.56) *
+        (1 - seg(p, 0.72, 0.82));
+
+      /*
+       * 이 시점에는 흰 원이 화면 전체를 덮고 있습니다.
+       */
+      endingImage.style.opacity =
+        seg(p, 0.64, 0.66);
+
+      const showText = p >= 0.82;
+      const caption = narration.finale;
+
+      caption.style.opacity = showText ? 1 : 0;
+      caption.setAttribute('aria-hidden', String(!showText));
+
+      if (showText) {
+        type(caption, 0, now);
+      } else {
+        typingStarts.delete(caption);
+        reveal(caption, 0);
+      }
+    }
+
+    /* 전체 장면 렌더링 */
     let previousTime = 0;
 
     function render(now) {
@@ -942,10 +1239,31 @@
 
       previousTime = now;
 
-      const s = Math.min(
+      let s = Math.min(
         storyLength,
         Math.max(0, scrollTop() / vh)
       );
+
+      /*
+       * 선착장 나레이션 완료 전에는
+       * 중앙 고래 접근 구간으로 넘어가지 않습니다.
+       */
+      const nightStarted = typingStarts.get(narration.night);
+
+      if (
+        !accepted &&
+        s >= 6.1 &&
+        s < 7.35 &&
+        nightStarted !== undefined
+      ) {
+        const duration =
+          narration.night._chars.length * 36 + 500;
+
+        if (now - nightStarted < duration) {
+          s = 6.1;
+          goToPixels(6.1 * vh, false);
+        }
+      }
 
       const introFade = 1 - seg(s, 0.85, 1.25);
 
@@ -961,11 +1279,10 @@
         seg(s, 6.9, 7.65) *
         (accepted ? 1 - seg(s, 9.15, 9.75) : 1);
 
-      const acceptedFade = accepted
-        ? seg(s, 9.15, 9.85)
-        : 0;
+      const acceptedFade =
+        accepted ? seg(s, 9.15, 9.85) : 0;
 
-      /* 첫 장면 */
+      /* 첫 화면 */
       visibility($('#intro'), introFade);
 
       reveal(
@@ -978,7 +1295,7 @@
       visibility($('#map-scene'), mapFade);
 
       if (mapFade > 0.01) {
-        type(narration.map, seg(s, 1.1, 1.9), now);
+        type(narration.map, 0, now);
       }
 
       const z = seg(s, 2.05, 3.55);
@@ -997,7 +1314,6 @@
       }
 
       opacity('.map-heading', 1 - seg(s, 2.1, 2.65));
-      opacity('.compass', 1 - seg(s, 2.7, 3.2));
 
       /* 선착장 */
       visibility($('#harbor'), harborFade);
@@ -1033,40 +1349,37 @@
       );
 
       if (arrival > 0.01) {
-        type(narration.arrival, seg(s, 3.8, 4.35), now);
+        type(narration.arrival, 0, now);
       }
 
       if (night > 0.01) {
-        type(narration.night, seg(s, 5.05, 6.1), now);
+        type(narration.night, 0, now);
       }
 
-      /*
-       * 나레이션이 완전히 표시된 뒤,
-       * 추가 스크롤 구간에서 중앙 고래 등장.
-       */
+      /* 중앙 고래 접근 */
       const whaleFlight = $('#whale-flight');
 
       if (whaleFlight) {
         const image = whaleFlight.querySelector('img');
 
-        const screenWidth = stage.clientWidth;
-        const screenHeight = stage.clientHeight;
+        const width = stage.clientWidth;
+        const height = stage.clientHeight;
 
-        const imageRatio =
+        const ratio =
           image?.naturalWidth && image?.naturalHeight
             ? image.naturalWidth / image.naturalHeight
             : 1.5;
 
         const baseWidth = Math.min(
-          screenWidth * 0.72,
-          screenHeight * 0.85
+          width * 0.72,
+          height * 0.85
         );
 
-        const baseHeight = baseWidth / imageRatio;
+        const baseHeight = baseWidth / ratio;
 
         const fullScale = Math.max(
-          screenWidth / baseWidth,
-          screenHeight / baseHeight
+          width / baseWidth,
+          height / baseHeight
         ) * 1.8;
 
         const approach = seg(s, 6.3, 6.6);
@@ -1076,37 +1389,20 @@
           ? 0.9
           : 0.18 + (fullScale - 0.18) * approach;
 
-        whaleFlight.style.setProperty(
-          'position', 'absolute', 'important'
-        );
-
-        whaleFlight.style.setProperty(
-          'left', '50%', 'important'
-        );
-
-        whaleFlight.style.setProperty(
-          'top', '55%', 'important'
-        );
-
-        whaleFlight.style.setProperty(
-          'width', `${baseWidth}px`, 'important'
-        );
-
-        whaleFlight.style.setProperty(
-          'height', `${baseHeight}px`, 'important'
-        );
-
-        whaleFlight.style.setProperty(
-          'margin', '0', 'important'
-        );
-
-        whaleFlight.style.setProperty(
-          'animation', 'none', 'important'
-        );
-
-        whaleFlight.style.setProperty(
-          'transition', 'none', 'important'
-        );
+        [
+          ['position', 'absolute'],
+          ['left', '50%'],
+          ['top', '55%'],
+          ['width', `${baseWidth}px`],
+          ['height', `${baseHeight}px`],
+          ['margin', '0'],
+          ['animation', 'none'],
+          ['transition', 'none']
+        ].forEach(([property, value]) => {
+          whaleFlight.style.setProperty(
+            property, value, 'important'
+          );
+        });
 
         whaleFlight.style.transformOrigin = '50% 50%';
         whaleFlight.style.opacity = appear;
@@ -1117,7 +1413,7 @@
             7 * (1 - approach);
 
         whaleFlight.style.transform =
-          `translate(-50%, calc(-50% + ${bob}px))
+          `translate(-50%,calc(-50% + ${bob}px))
            scale(${scale})`;
 
         if (image) {
@@ -1134,23 +1430,20 @@
         }
       }
 
-      /* 보따리·참여 제안 */
+      /* 보따리와 참여 제안 */
       visibility($('#invitation'), inviteFade);
 
       if (inviteFade > 0.01) {
-        type(narration.offer, seg(s, 7.3, 8.15), now);
+        type(narration.offer, 0, now);
       }
 
-      const questionOpacity = seg(s, 7.95, 8.25);
-
-      opacity('.invitation-question', questionOpacity);
+      opacity(
+        '.invitation-question',
+        seg(s, 7.95, 8.25)
+      );
 
       if (inviteFade > 0.01 && s >= 7.95) {
-        type(
-          narration.question,
-          seg(s, 7.95, 8.25),
-          now
-        );
+        type(narration.question, 0, now);
       }
 
       const choiceReady = s >= 8.15 && !accepted;
@@ -1159,6 +1452,7 @@
       if (choices) {
         choices.style.opacity = choiceOpacity;
         choices.inert = !choiceReady;
+
         choices.setAttribute(
           'aria-hidden',
           String(!choiceReady)
@@ -1173,15 +1467,11 @@
           choiceReady ? 'auto' : 'none';
       }
 
-      /* 수락 후 */
+      /* 수락 후 나레이션 */
       visibility($('#accepted'), acceptedFade);
 
       if (acceptedFade > 0.01) {
-        type(
-          narration.accepted,
-          seg(s, 9.55, 10.15),
-          now
-        );
+        type(narration.accepted, 0, now);
       }
 
       const progress = $('#progress-bar');
@@ -1222,26 +1512,15 @@
         type(narration.mission, 0, now);
       }
 
+      renderEnding(now);
       updateRefuse(dt);
+
       requestAnimationFrame(render);
     }
 
-    /*
-     * 다음 장면 이동.
-     * 고래 접근 중간 지점을 추가해 버튼으로도 확인 가능합니다.
-     */
     const stops = [
-      1.6,
-      2.7,
-      4.15,
-      4.9,
-      5.65,
-      6.25,
-      6.48,
-      6.62,
-      7.75,
-      8.6,
-      10.1
+      1.6, 2.7, 4.15, 4.9, 5.65,
+      6.25, 6.48, 6.62, 7.75, 8.6, 10.1
     ];
 
     function nextScene() {
@@ -1257,9 +1536,7 @@
         (accepted || stop <= 8.6)
       );
 
-      if (next !== undefined) {
-        jump(next);
-      }
+      if (next !== undefined) jump(next);
     }
 
     continueButton?.addEventListener('click', nextScene);
@@ -1277,19 +1554,15 @@
     function reset() {
       accepted = false;
       storyLength = 9.6;
+      ending.hidden = true;
 
-      if (missions) {
-        missions.hidden = true;
-      }
+      if (missions) missions.hidden = true;
 
       missionTitleVisible = false;
       restoreRefuse();
 
       const message = $('#dodge-message');
-
-      if (message) {
-        message.textContent = '';
-      }
+      if (message) message.textContent = '';
 
       dialogues.forEach(element => {
         typingStarts.delete(element);
@@ -1322,9 +1595,7 @@
       accepted = true;
       storyLength = 10.6;
 
-      if (refuse) {
-        refuse.hidden = true;
-      }
+      if (refuse) refuse.hidden = true;
 
       stopRefuse();
       measure();
@@ -1335,6 +1606,9 @@
       if (!accepted || !missions) return;
 
       missions.hidden = false;
+      ending.hidden = false;
+
+      measureEnding();
 
       missions.scrollIntoView({
         behavior: reduced ? 'auto' : 'smooth',
@@ -1347,9 +1621,7 @@
       openMissions
     );
 
-    /*
-     * 마우스 휠.
-     */
+    /* 마우스 휠 */
     stage.addEventListener('wheel', event => {
       if (event.ctrlKey || event.metaKey) return;
 
@@ -1372,9 +1644,7 @@
       passive: false
     });
 
-    /*
-     * 모바일 한 손가락 스크롤.
-     */
+    /* 모바일 스크롤 */
     stage.addEventListener('touchstart', event => {
       if (event.touches.length !== 1) {
         touchPoint = null;
@@ -1390,33 +1660,22 @@
     });
 
     stage.addEventListener('touchmove', event => {
-      if (
-        !touchPoint ||
-        event.touches.length !== 1
-      ) {
+      if (!touchPoint || event.touches.length !== 1) {
         return;
       }
 
       const touch = event.touches[0];
-
-      const deltaX =
-        touchPoint.x - touch.clientX;
-
-      const deltaY =
-        touchPoint.y - touch.clientY;
+      const deltaX = touchPoint.x - touch.clientX;
+      const deltaY = touchPoint.y - touch.clientY;
 
       touchPoint = {
         x: touch.clientX,
         y: touch.clientY
       };
 
-      if (Math.abs(deltaX) > Math.abs(deltaY)) {
-        return;
-      }
+      if (Math.abs(deltaX) > Math.abs(deltaY)) return;
 
-      if (event.cancelable) {
-        event.preventDefault();
-      }
+      if (event.cancelable) event.preventDefault();
 
       changeScroll(deltaY);
     }, {
@@ -1431,20 +1690,14 @@
       touchPoint = null;
     });
 
-    /*
-     * 키보드 스크롤.
-     */
+    /* 키보드 스크롤 */
     document.addEventListener('keydown', event => {
       const tag = event.target?.tagName;
 
       if (
         [
-          'INPUT',
-          'TEXTAREA',
-          'SELECT',
-          'BUTTON',
-          'A',
-          'SUMMARY'
+          'INPUT', 'TEXTAREA', 'SELECT',
+          'BUTTON', 'A', 'SUMMARY'
         ].includes(tag) ||
         event.target?.isContentEditable ||
         event.ctrlKey ||
@@ -1455,8 +1708,7 @@
       }
 
       if (
-        rawScrollTop() >=
-        story.offsetHeight - vh
+        rawScrollTop() >= story.offsetHeight - vh
       ) {
         return;
       }
@@ -1479,17 +1731,13 @@
       }
     });
 
-    /*
-     * 화면 크기 변경.
-     */
+    /* 화면 크기 변경 */
     window.addEventListener('resize', () => {
       clearTimeout(resizeTimer);
 
       resizeTimer = setTimeout(() => {
         const oldPosition = scrollTop() / vh;
-
-        const wasInsideStory =
-          oldPosition <= storyLength;
+        const wasInsideStory = oldPosition <= storyLength;
 
         restoreRefuse();
 
@@ -1498,6 +1746,7 @@
         }
 
         measure();
+        measureEnding();
 
         if (wasInsideStory) {
           jump(oldPosition, false);
@@ -1508,9 +1757,7 @@
     window.addEventListener('blur', stopRefuse);
 
     document.addEventListener('visibilitychange', () => {
-      if (document.hidden) {
-        stopRefuse();
-      }
+      if (document.hidden) stopRefuse();
     });
 
     if ('scrollRestoration' in history) {
