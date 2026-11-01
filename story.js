@@ -1729,3 +1729,183 @@ if (refuse?.classList.contains('has-moved')) {
     start();
   }
 })();
+/* 미션 카드를 이미지 중심으로 변경 */
+(() => {
+  function setupMissionImages() {
+    const cards = [
+      ...document.querySelectorAll(
+        '#missions .mission-grid > details'
+      )
+    ];
+
+    if (!cards.length) return;
+
+    const missions = [
+      {
+        src: 'assets/mission-1.png',
+        alt: '다섯 명이 손가락을 맞대어 별을 만드는 모습'
+      },
+      {
+        src: 'assets/mission-2.png',
+        alt: '꽃이 핀 들판에서 역동적으로 공을 차는 모습'
+      },
+      {
+        src: 'assets/mission-3.png',
+        alt: '다섯 명이 들판에서 몸으로 IAFC를 만드는 모습'
+      },
+      {
+        src: 'assets/mission-4.png',
+        alt: '네 명이 함께 웃으며 셀카를 찍는 모습'
+      }
+    ];
+
+    if (!document.getElementById('mission-image-style')) {
+      const style = document.createElement('style');
+      style.id = 'mission-image-style';
+
+      style.textContent = `
+        #missions .mission-grid > details {
+          min-width: 0;
+          min-height: 0 !important;
+          overflow: hidden;
+        }
+
+        #missions .mission-grid > details > summary {
+          display: block !important;
+          height: auto !important;
+          min-height: 0 !important;
+          padding: 12px !important;
+          list-style: none !important;
+          cursor: pointer;
+        }
+
+        #missions .mission-grid > details > summary::marker {
+          content: "";
+        }
+
+        #missions .mission-grid > details >
+        summary::-webkit-details-marker {
+          display: none;
+        }
+
+        #missions .mission-grid > details >
+        summary::before,
+        #missions .mission-grid > details >
+        summary::after {
+          display: none !important;
+        }
+
+        #missions .mission-card-image {
+          display: block;
+          width: 100% !important;
+          height: auto !important;
+          aspect-ratio: 3 / 2;
+          object-fit: contain;
+          border-radius: 12px;
+          background: #101d30;
+          box-shadow:
+            0 0 0 1px rgba(219, 205, 166, 0.25),
+            0 0 20px rgba(184, 207, 242, 0.12);
+        }
+
+        #missions .mission-card-action {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 10px;
+          margin: 16px 0 5px;
+          color: #f0e5cc;
+          font: inherit;
+          font-size: 14px;
+          letter-spacing: 0.06em;
+        }
+
+        #missions .mission-card-action-mark {
+          color: #dfc88f;
+          font-size: 20px;
+          line-height: 1;
+        }
+
+        #missions .mission-grid > details >
+        summary:focus-visible {
+          outline: 2px solid #dfc88f;
+          outline-offset: -4px;
+          border-radius: 14px;
+        }
+
+        #missions .mission-grid > details > p {
+          padding: 0 20px 22px !important;
+          margin: 8px 0 0 !important;
+          line-height: 1.85;
+        }
+
+        @media (max-width: 600px) {
+          #missions .mission-grid > details > summary {
+            padding: 9px !important;
+          }
+
+          #missions .mission-card-image {
+            border-radius: 9px;
+          }
+        }
+      `;
+
+      document.head.append(style);
+    }
+
+    cards.forEach((card, index) => {
+      const mission = missions[index];
+      const summary = card.querySelector('summary');
+
+      if (!mission || !summary) return;
+      if (summary.dataset.imageMission === 'true') return;
+
+      summary.dataset.imageMission = 'true';
+
+      const image = document.createElement('img');
+      image.className = 'mission-card-image';
+      image.src = mission.src;
+      image.alt = mission.alt;
+      image.width = 1536;
+      image.height = 1024;
+      image.loading = 'lazy';
+      image.decoding = 'async';
+
+      const action = document.createElement('span');
+      action.className = 'mission-card-action';
+
+      const label = document.createElement('span');
+
+      const mark = document.createElement('span');
+      mark.className = 'mission-card-action-mark';
+      mark.setAttribute('aria-hidden', 'true');
+
+      action.append(label, mark);
+
+      // 기존 번호·영문·심볼·제목만 교체합니다.
+      // summary 바깥의 상세 설명은 그대로 유지합니다.
+      summary.replaceChildren(image, action);
+
+      function updateAction() {
+        label.textContent = card.open
+          ? '미션 접기'
+          : '미션 펼치기';
+
+        mark.textContent = card.open ? '−' : '＋';
+      }
+
+      card.addEventListener('toggle', updateAction);
+      updateAction();
+    });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener(
+      'DOMContentLoaded',
+      setupMissionImages,
+      { once: true }
+    );
+  } else {
+    setupMissionImages();
+  }
+})();
