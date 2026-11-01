@@ -45,7 +45,7 @@
 
     const typingStarts = new WeakMap();
 
-    /* 화면 보정 및 장면 스타일 */
+    /* 기존 CSS 유지 + 필요한 보정 */
     const repairStyle = document.createElement('style');
 
     repairStyle.textContent = `
@@ -173,7 +173,6 @@
         background:transparent !important;
       }
 
-      /* 직전 지도 크기에서 추가 20% 확대 */
       .map-position {
         width:min(100.8svh,864px) !important;
       }
@@ -253,7 +252,7 @@
         }
       }
 
-      /* 마지막 구체·탑승 장면 */
+      /* 구체와 마지막 탑승 장면 */
       #memory-ending {
         position:relative;
         background:#081725;
@@ -281,7 +280,6 @@
           url("assets/night-clean.png") center/cover no-repeat;
       }
 
-      /* 실제 업로드된 탑승 이미지 파일명 */
       .memory-final-image {
         z-index:1;
         opacity:0;
@@ -290,12 +288,29 @@
           url("assets/final-riders.png") center/cover no-repeat;
       }
 
+      /* 나레이션: 화면 중앙보다 20% 위 */
+      .memory-gather-caption.dialogue {
+        position:absolute;
+        z-index:6;
+        top:30%;
+        left:7%;
+        right:7%;
+        margin:0;
+        transform:translateY(-50%);
+        text-align:center;
+        font-size:clamp(22px,2.6vw,34px);
+        line-height:1.8;
+        opacity:0;
+        pointer-events:none;
+      }
+
+      /* 보따리: 기존 중앙보다 10% 아래 */
       .memory-bundle {
         position:absolute;
         z-index:3;
         left:50%;
-        top:50%;
-        width:clamp(150px,24vw,280px);
+        top:60%;
+        width:min(clamp(140px,24vw,280px),30svh);
         aspect-ratio:1;
         transform:translate(-50%,-50%);
         background:
@@ -322,7 +337,7 @@
       .memory-orb {
         position:absolute;
         left:50%;
-        top:50%;
+        top:60%;
         width:clamp(85px,13vw,150px);
         height:auto;
         opacity:0;
@@ -330,11 +345,12 @@
         will-change:transform,opacity;
       }
 
+      /* 보따리 중심에서 퍼지는 빛 */
       .memory-flash {
         position:absolute;
         z-index:8;
         left:50%;
-        top:50%;
+        top:60%;
         width:0;
         height:0;
         border-radius:50%;
@@ -347,6 +363,7 @@
         pointer-events:none;
       }
 
+      /* 마지막 나레이션은 정중앙 */
       .memory-caption.dialogue {
         position:absolute;
         z-index:10;
@@ -387,7 +404,7 @@
           width:min(132.48vw,93.6svh) !important;
         }
         .memory-bundle {
-          width:min(45vw,220px);
+          width:min(45vw,220px,30svh);
         }
         .memory-orb {
           width:95px;
@@ -421,21 +438,17 @@
 
     function toStory(pagePosition) {
       if (pagePosition <= 6.3) return pagePosition;
-
       if (pagePosition <= 7.8) {
         return 6.3 + (pagePosition - 6.3) / 5;
       }
-
       return pagePosition - 1.2;
     }
 
     function toPage(storyPosition) {
       if (storyPosition <= 6.3) return storyPosition;
-
       if (storyPosition <= 6.6) {
         return 6.3 + (storyPosition - 6.3) * 5;
       }
-
       return storyPosition + 1.2;
     }
 
@@ -484,7 +497,7 @@
       goToPixels(toStory(nextPosition) * vh, false);
     }
 
-    /* 마지막 장면 생성 */
+    /* 마지막 장면 */
     const ending = document.createElement('section');
     ending.id = 'memory-ending';
     ending.hidden = true;
@@ -496,10 +509,17 @@
         <div class="memory-final-image" aria-hidden="true"></div>
         <div class="memory-bundle" aria-hidden="true"></div>
         <div class="memory-orbs" aria-hidden="true"></div>
+
+        <p
+          class="memory-gather-caption dialogue"
+          data-text="우리의 추억이, 한 곳으로 모이는 순간"
+          aria-hidden="true"
+        ></p>
+
         <div class="memory-flash" aria-hidden="true"></div>
+
         <p
           class="memory-caption dialogue"
-          data-text="우리의 이야기는 이제 시작이라네"
           aria-hidden="true"
         ></p>
       </div>
@@ -521,16 +541,31 @@
       return image;
     });
 
-    /* 문구 변경 */
+    /* 나레이션 문구 */
     [
-      ['.map-heading h2', '좀 더 자세히 살펴보자고'],
+      [
+        '.map-heading h2',
+        '좀 더 자세히 살펴보자고'
+      ],
+      [
+        '.invitation-copy .dialogue',
+        '이곳에서는 함께 만든 추억으로\n하늘고래를 탈 수 있는 표를 구한다네.'
+      ],
+      [
+        '.invitation-question',
+        '어때… 관심 있는가?'
+      ],
       [
         '#accepted .dialogue',
         '하하, 그럴 줄 알았어\n자, 함께 추억을 만들어 보게!'
       ],
       [
         '#mission-title',
-        '우리의 추억이,\n한 곳으로 모이는 순간'
+        '자세한 수행 방법은 밑에 있으니 확인해보게!'
+      ],
+      [
+        '.memory-caption',
+        '자, 그럼 부디 성공하여 하늘고래를 타고\n광활히 펼쳐진 드넓은 하늘길을 누벼보세!'
       ]
     ].forEach(([selector, text]) => {
       const element = $(selector);
@@ -552,6 +587,7 @@
       map: $('.map-heading h2'),
       mission: $('#mission-title'),
       question: $('.invitation-question'),
+      gather: ending.querySelector('.memory-gather-caption'),
       finale: ending.querySelector('.memory-caption')
     };
 
@@ -562,7 +598,7 @@
       ].filter(Boolean))
     ];
 
-    /* 모든 나레이션을 같은 글자 구조로 구성 */
+    /* 모든 나레이션에 같은 글자별 구조 적용 */
     dialogues.forEach(element => {
       let content = element.dataset.text;
 
@@ -573,6 +609,7 @@
       }
 
       content = content.replaceAll('\\n', '\n');
+
       element.dataset.text = content;
       element.classList.add('dialogue');
       element.setAttribute('aria-label', content);
@@ -622,7 +659,7 @@
       observer.observe(narration.mission);
     }
 
-    /* 별빛 효과 */
+    /* 별빛 */
     const stars = $('#stars');
 
     if (stars) {
@@ -644,7 +681,7 @@
       }
     }
 
-    /* 첫 화면과 동일한 나레이션 모션 */
+    /* 첫 화면과 동일한 모션 */
     function reveal(element, progress) {
       if (!element?._chars) return;
 
@@ -656,7 +693,8 @@
           : smooth((progress - index / count * 0.8) / 0.2);
 
         character.style.opacity = value;
-        character.style.transform = `translateY(${(1 - value) * 8}px)`;
+        character.style.transform =
+          `translateY(${(1 - value) * 8}px)`;
       });
     }
 
@@ -830,7 +868,6 @@
         }
       }
 
-      /* 수락 버튼과 대사를 가리지 않도록 회피 */
       const obstacles = [
         { element: accept, padding: 30 },
         { element: $('.invitation-copy'), padding: 18 },
@@ -868,7 +905,6 @@
         accelerationY += exit.y * force;
       });
 
-      /* 가속을 기다리지 않고 즉시 빠르게 회피 */
       const bouncing = performance.now() < repel.bounceUntil;
       const forceLength = Math.hypot(accelerationX, accelerationY);
 
@@ -1039,7 +1075,9 @@
 
     function measureEnding() {
       if (ending.hidden) return;
-      ending.style.height = `${Math.max(1, endingStage.clientHeight) * 6}px`;
+
+      ending.style.height =
+        `${Math.max(1, endingStage.clientHeight) * 6}px`;
     }
 
     function renderEnding(now) {
@@ -1054,10 +1092,29 @@
       );
 
       const radiusX = Math.min(width * 0.34, 360);
-      const radiusY = Math.min(height * 0.29, 240);
+      const radiusY = Math.min(height * 0.25, 220);
       const born = seg(p, 0.04, 0.15);
 
-      /* 구체 6개가 보따리 중앙으로 모임 */
+      /* 구체 장면 나레이션 */
+      const gatherOpacity =
+        seg(p, 0.01, 0.04) *
+        (1 - seg(p, 0.50, 0.54));
+
+      narration.gather.style.opacity = gatherOpacity;
+
+      narration.gather.setAttribute(
+        'aria-hidden',
+        String(gatherOpacity < 0.01)
+      );
+
+      if (gatherOpacity > 0.01) {
+        type(narration.gather, 0, now);
+      } else if (p < 0.01) {
+        typingStarts.delete(narration.gather);
+        reveal(narration.gather, 0);
+      }
+
+      /* 구체 6개가 보따리 중앙, 화면 높이 60%로 모임 */
       endingOrbs.forEach((orb, index) => {
         const gathered = seg(
           p,
@@ -1092,15 +1149,18 @@
       endingBundle.style.filter = `drop-shadow(0 0 ${glow}px #ffe6a0)`;
 
       /*
-       * 모든 구체 도착: 0.515
+       * 6개 구체 도착:   0.515
        * 중앙 빛 확산:   0.54 ~ 0.62
        * 탑승 배경 전환: 0.64 ~ 0.66
        * 흰빛 걷힘:     0.72 ~ 0.82
+       *
+       * 중심이 화면 높이 60%이므로,
+       * 가장 먼 위쪽 모서리까지 덮는 지름을 계산합니다.
        */
-      const diameter =
-        Math.hypot(width, height) *
-        1.15 *
-        seg(p, 0.54, 0.62);
+      const coverDiameter =
+        2 * Math.hypot(width * 0.5, height * 0.6) * 1.05;
+
+      const diameter = coverDiameter * seg(p, 0.54, 0.62);
 
       endingFlash.style.width = `${diameter}px`;
       endingFlash.style.height = `${diameter}px`;
@@ -1140,7 +1200,6 @@
         Math.max(0, scrollTop() / vh)
       );
 
-      /* 선착장 나레이션 완료 후 고래 접근 */
       const nightStarted = typingStarts.get(narration.night);
 
       if (
@@ -1215,13 +1274,20 @@
       opacity('#arrival-caption', arrival);
       opacity('#night-caption', night);
 
-      $('#arrival-caption')?.setAttribute('aria-hidden', String(arrival < 0.01));
-      $('#night-caption')?.setAttribute('aria-hidden', String(night < 0.01));
+      $('#arrival-caption')?.setAttribute(
+        'aria-hidden',
+        String(arrival < 0.01)
+      );
+
+      $('#night-caption')?.setAttribute(
+        'aria-hidden',
+        String(night < 0.01)
+      );
 
       if (arrival > 0.01) type(narration.arrival, 0, now);
       if (night > 0.01) type(narration.night, 0, now);
 
-      /* 중앙에서 다가오는 고래 */
+      /* 중앙 고래 접근 */
       const whaleFlight = $('#whale-flight');
 
       if (whaleFlight) {
@@ -1285,13 +1351,23 @@
         if (appear > 0 && harborFade > 0) drawSwimmingWhale(now);
       }
 
+      /* 본문과 질문을 같은 시점에 등장 */
       visibility($('#invitation'), inviteFade);
+      opacity('.invitation-question', 1);
 
-      if (inviteFade > 0.01) type(narration.offer, 0, now);
+      if (inviteFade > 0.01) {
+        if (!typingStarts.has(narration.offer)) {
+          typingStarts.set(narration.offer, now);
+        }
 
-      opacity('.invitation-question', seg(s, 7.95, 8.25));
+        if (!typingStarts.has(narration.question)) {
+          typingStarts.set(
+            narration.question,
+            typingStarts.get(narration.offer)
+          );
+        }
 
-      if (inviteFade > 0.01 && s >= 7.95) {
+        type(narration.offer, 0, now);
         type(narration.question, 0, now);
       }
 
@@ -1417,7 +1493,7 @@
       jump(8.6, false);
     });
 
-    /* 수락 후 페이드아웃 → 장면 교체 → 페이드인 */
+    /* 수락 후 페이드 전환 */
     accept?.addEventListener('click', async () => {
       if (accepted || accept.disabled) return;
 
@@ -1469,7 +1545,6 @@
         if (refuse) refuse.hidden = true;
 
         typingStarts.delete(narration.accepted);
-
         measure();
         jump(10.1, false);
 
