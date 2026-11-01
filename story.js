@@ -819,14 +819,12 @@
       refuse.style.pointerEvents = '';
     }
 
-    function updateRefuse(dt) {
-      const current = scrollTop() / vh;
-
-      const enabled = refuse &&
-        !refuse.hidden &&
-        !accepted &&
-        current >= 8.15 &&
-        current <= 9.2;
+function updateRefuse(dt) {
+  const enabled = refuse &&
+    !refuse.hidden &&
+    !accepted &&
+    choices &&
+    !choices.inert;
 
       if (!enabled || !repel.pointer) {
         repel.vx = 0;
@@ -1351,16 +1349,21 @@
         if (appear > 0 && harborFade > 0) drawSwimmingWhale(now);
       }
 
-/* 본문 완료 → 잠깐 유지 → 질문 등장 */
+/* 본문 → 0.25초 대기 → 질문 → 버튼 등장 */
 visibility($('#invitation'), inviteFade);
 
+let questionFinished = false;
+let questionFinishedAt = 0;
+
 if (inviteFade > 0.01) {
+  // 본문: 첫 화면과 동일한 글자 등장 효과
   type(narration.offer, 0, now);
 
   const offerStart = typingStarts.get(narration.offer);
   const offerDuration =
     narration.offer._chars.length * 36 + 500;
 
+  // 본문이 끝나고 0.25초 뒤 질문 시작
   const questionReady =
     now >= offerStart + offerDuration + 250;
 
@@ -1368,30 +1371,55 @@ if (inviteFade > 0.01) {
 
   if (questionReady) {
     type(narration.question, 0, now);
+
+    const questionStart =
+      typingStarts.get(narration.question);
+
+    const questionDuration =
+      narration.question._chars.length * 36 + 500;
+
+    questionFinishedAt =
+      questionStart + questionDuration;
+
+    questionFinished = now >= questionFinishedAt;
   } else {
     typingStarts.delete(narration.question);
     reveal(narration.question, 0);
   }
 } else {
   opacity('.invitation-question', 0);
+
   typingStarts.delete(narration.offer);
   typingStarts.delete(narration.question);
 }
 
-      const choiceReady = s >= 8.15 && !accepted;
-      const choiceOpacity = seg(s, 8.05, 8.45);
+// 질문이 끝나면 추가 스크롤 없이 버튼을 0.3초 동안 표시
+const choiceOpacity =
+  questionFinished && !accepted
+    ? smooth((now - questionFinishedAt) / 300)
+    : 0;
 
-      if (choices) {
-        choices.style.opacity = choiceOpacity;
-        choices.inert = !choiceReady;
-        choices.setAttribute('aria-hidden', String(!choiceReady));
-      }
+const choiceReady =
+  inviteFade > 0.95 &&
+  choiceOpacity > 0.98 &&
+  !accepted;
 
-      if (refuse?.classList.contains('has-moved')) {
-        refuse.style.opacity = choiceOpacity;
-        refuse.inert = !choiceReady;
-        refuse.style.pointerEvents = choiceReady ? 'auto' : 'none';
-      }
+if (choices) {
+  choices.style.opacity = choiceOpacity;
+  choices.inert = !choiceReady;
+  choices.setAttribute(
+    'aria-hidden',
+    String(!choiceReady)
+  );
+}
+
+// 거절 버튼이 별도 위치로 이동한 경우에도 같은 표시 조건 적용
+if (refuse?.classList.contains('has-moved')) {
+  refuse.style.opacity = choiceOpacity;
+  refuse.inert = !choiceReady;
+  refuse.style.pointerEvents =
+    choiceReady ? 'auto' : 'none';
+}
 
       visibility($('#accepted'), acceptedFade);
 
